@@ -1,0 +1,14 @@
+{
+	"name": "Prisms",
+	"bundleID": "com.thinktank.prisms",
+	"version": "1.0.0",
+	"serverScript": "server/prisms.js",
+	"port": 8082,
+	"uiPath": "/ui/",
+	"resources": [
+		"server/prisms.js",
+		"server/defaults.json",
+		"web/prisms-ui"
+	],
+	"cli": null
+}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<title>Agora – Edit Conversation</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/style.css">
+	<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+	<div id="sidebar">
+		<div id="actionsWrapper">
+			<button id="deleteButton">delete</button>
+		</div>
+		<div id="editorList"></div>
+	</div>
+	<div id="main">
+		<div id="titlePanel">
+			<button id="titleButton">Edit Conversation</button>
+		</div>
+		<div id="contentWrapper">
+			<textarea id="editorInput" spellcheck="false" autocomplete="off"></textarea>
+		</div>
+		<div id="messageWrapper">
+			<div id="messagePanel">
+				<button id="saveButton">save</button>
+			</div>
+		</div>
+	</div>
+	<script src="main.js"></script>
+	<script>
+		const chatID = new URLSearchParams(location.search).get("chat");
+
+		function entryLabel(entry, index) {
+			const kind = entry.type == "message" ? (entry.role ?? "message") : entry.type;
+			return `${index}  ${kind}  ${entry.name ?? ""}`.trim();
+		}
+
+		const editor = SettingsEditor.initialize({
+			getListData: async () => {
+				if (chatID == null) {
+					return [];
+				}
+				const context = await AgoraAPI.readContext(chatID) ?? [];
+				const entries = [];
+				const groupSize = context.length >= 20 ? 10 : 0;
+				let index = 0;
+				for (const entry of context) {
+					let group;
+					if (groupSize) {
+						const start = Math.floor(index / groupSize) * groupSize + 1;
+						const end = Math.min(start + groupSize - 1, context.length);
+						group = `Entries ${start}-${end}`;
+					}
+					entries.push({ label: entryLabel(entry, index), data: { index, entry }, group });
+					++index;
+				}
+				return entries;
+			},
+			readItem: async (data) => {
+				const entry = data.entry;
+				if (entry.type == "image") {
+					if (entry.name == "raw") {
+						return new EditorImage("data:image;base64," + entry.content);
+					}
+					return new EditorImage(`/ui/images/${entry.name}-Thumb.jpeg`);
+				}
+				return entry.content;
+			},
+			updateItem: async (data, value) => {
+				const entry = { ...data.entry, content: value };
+				const context = await AgoraAPI.setContext(chatID, data.index, entry);
+				return context[data.index].content;
+			}
+		});
+
+		document.getElementById("deleteButton").addEventListener("click", async () => {
+			const indexes = [];
+			for (const entry of editor.getSelection()) {
+				const index = entry.data.index;
+				if (indexes.indexOf(index) < 0) {
+					indexes.push(index);
+				}
+			}
+			if (chatID == null || indexes.length == 0) {
+				return;
+			}
+			indexes.sort((a, b) => b - a);
+			const message = indexes.length == 1 ? `Delete context entry ${indexes[0]}?` : `Delete ${indexes.length} context entries?`;
+			if (confirm(message)) {
+				await editor.run(false, async () => {
+					for (const index of indexes) {
+						await AgoraAPI.setContext(chatID, index, null);
+					}
+				});
+			}
+		});
+	</script>
+</body>
+</html>

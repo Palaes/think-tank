@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<title>Prisms</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/layout.css" />
+	<link rel="stylesheet" href="/ui/theme.css" />
+	<link rel="stylesheet" href="/ui/special.css" />
+</head>
+<body>
+	<div class="options" id="parameters">
+		<div class="row">
+			<button id="generate" class="main">Generate</button>
+		</div>
+		<div id="generation-group" collapsible class="collapsed group">
+			<h2>Generation</h2>
+			<div class="row">
+				<textarea id="combined" placeholder="combined prompt" SDTarget="combinedPrompt" SDType="string"></textarea>
+			</div>
+			<div class="row">
+				<label for="currentSeed">seed</label>
+				<input id="currentSeed" type="number" min="1" step="1" value="35880" SDTarget="seed" SDType="int" />
+				<button id="nextSeed">next</button>
+				<input id="randomize" type="checkbox" />
+			</div>
+			<div class="row" combined>
+				<label for="batchCount">count</label>
+				<input id="batchCount" type="range" min="1" max="20" step="1" value="1" />
+				<input type="number" SDTarget="batchCount" SDType="int" />
+			</div>
+			<div class="row" combined>
+				<label for="strength">strength</label>
+				<input id="strength" type="range" min="0" max="1" step="0.05" value="0.5" />
+				<input type="number" SDTarget="strength" SDType="float" />
+			</div>
+		</div>
+		<div id="model-group" collapsible class="collapsed group">
+			<h2>Model</h2>
+			<div class="row">
+				<label for="model">base model</label>
+				<select id="model" SDTarget="model" SDType="nest">
+				</select>
+			</div>
+			<div class="row">
+				<label for="refinerModel">refiner model</label>
+				<select id="refinerModel" SDTarget="refinerModel" SDType="nest">
+					<option value="">disabled</option>
+				</select>
+			</div>
+			<div class="row" combined>
+				<label for="refinerStart">refiner start</label>
+				<input id="refinerStart" type="range" min="0" max="1" step="0.05" value="0.5" />
+				<input type="number" SDTarget="refinerStart" SDType="float" />
+			</div>
+		</div>
+		<div id="LoRAs-group" collapsible class="collapsed group">
+			<h2>LoRAs</h2>
+			<div class="row">
+				<label for="LoRA0Model">LoRA 1</label>
+				<select id="LoRA0Model" SDTarget="loras/0/file" SDType="nest">
+					<option value="">disabled</option>
+				</select>
+			</div>
+			<div class="row" combined>
+				<label for="LoRA0Weight">weight</label>
+				<input id="LoRA0Weight" type="range" min="-2" max="2" step="0.05" value="0" />
+				<input type="number" SDTarget="loras/0/weight" SDType="float" />
+			</div>
+			<div class="row">
+				<label for="LoRA1Model">LoRA 2</label>
+				<select id="LoRA1Model" SDTarget="loras/1/file" SDType="nest">
+					<option value="">disabled</option>
+				</select>
+			</div>
+			<div class="row" combined>
+				<label for="LoRA1Weight">weight</label>
+				<input id="LoRA1Weight" type="range" min="-2" max="2" step="0.05" value="0" />
+				<input type="number" SDTarget="loras/1/weight" SDType="float" />
+			</div>
+			<div class="row">
+				<label for="LoRA2Model">LoRA 3</label>
+				<select id="LoRA2Model" SDTarget="loras/2/file" SDType="nest">
+					<option value="">disabled</option>
+				</select>
+			</div>
+			<div class="row" combined>
+				<label for="LoRA2Weight">weight</label>
+				<input id="LoRA2Weight" type="range" min="-2" max="2" step="0.05" value="0" />
+				<input type="number" SDTarget="loras/2/weight" SDType="float" />
+			</div>
+		</div>
+		<div id="controls-group" collapsible class="collapsed group">
+			<h2>Controls</h2>
+			<div class="row">
+				<label for="control0Model">control 1</label>
+				<select id="control0Model" SDTarget="controls/0/file" SDType="nest">
+					<option value="">disabled</option>
+				</select>
+			</div>
+			<div class="row" combined>
+				<label for="control0Weight">weight</label>
+				<input id="control0Weight" type="range" min="0" max="2" step="0.05" value="1" />
+				<input type="number" SDTarget="controls/0/weight" SDType="float" />
+			</div>
+			<div class="row">
+				<label for="control1Model">control 2</label>
+				<select id="control1Model" SDTarget="controls/1/file" SDType="nest">
+					<option value="">disabled</option>
+				</select>
+			</div>
+			<div class="row" combined>
+				<label for="control1Weight">weight</label>
+				<input id="control1Weight" type="range" min="0" max="2" step="0.05" value="1" />
+				<input type="number" SDTarget="controls/1/weight" SDType="float" />
+			</div>
+			<div class="row">
+				<label for="control2Model">control 3</label>
+				<select id="control2Model" SDTarget="controls/2/file" SDType="nest">
+					<option value="">disabled</option>
+				</select>
+			</div>
+			<div class="row" combined>
+				<label for="control2Weight">weight</label>
+				<input id="control2Weight" type="range" min="0" max="2" step="0.05" value="1" />
+				<input type="number" SDTarget="controls/2/weight" SDType="float" />
+			</div>
+		</div>
+		<div id="sampling-group" collapsible class="collapsed group">
+			<h2>Sampling</h2>
+			<div class="row">
+				<label for="sampler">sampler</label>
+				<select id="sampler" SDTarget="sampler" SDType="string">
+				</select>
+			</div>
+			<div class="row" combined>
+				<label for="guidance">guidance</label>
+				<input id="guidance" type="range" min="0" max="20" step="0.1" value="5" />
+				<input type="number" SDTarget="CFG" SDType="float" />
+			</div>
+			<div class="row" combined>
+				<label for="steps">steps</label>
+				<input id="steps" type="range" min="0" max="50" step="1" value="20" />
+				<input type="number" SDTarget="steps" SDType="int" />
+			</div>
+			<div class="row" combined>
+				<label for="shift">shift</label>
+				<input id="shift" type="range" min="0" max="8" step="0.05" value="1" />
+				<input type="number" SDTarget="shift" SDType="float" />
+			</div>
+			<div class="row" combined>
+				<label for="SSS">SSS</label>
+				<input id="SSS" type="range" min="0" max="1" step="0.05" value="0.3" />
+				<input type="number" SDTarget="SSS" SDType="float" />
+			</div>
+		</div>
+		<div id="resolution-group" collapsible class="collapsed group">
+			<h2>Resolution</h2>
+			<div class="row" combined>
+				<label for="width">width</label>
+				<input id="width" type="range" min="128" max="2048" step="64" value="768" />
+				<input type="number" SDTarget="width" SDType="int" />
+			</div>
+			<div class="row" combined>
+				<label for="height">height</label>
+				<input id="height" type="range" min="128" max="2048" step="64" value="512" />
+				<input type="number" SDTarget="height" SDType="int" />
+			</div>
+			<div id="hi-res-group" collapsible class="collapsed group">
+				<h2>Hi Res</h2>
+				<div class="row">
+					<label for="hiResEnabled">HR enabled</label>
+					<input id="hiResEnabled" type="checkbox" SDTarget="hiRes" SDType="bool" />
+				</div>
+				<div class="row" combined>
+					<label for="hiResWidth">HR width</label>
+					<input id="hiResWidth" type="range" min="128" max="2048" step="64" value="1152" />
+					<input type="number" SDTarget="hiResWidth" SDType="int" />
+				</div>
+				<div class="row" combined>
+					<label for="hiResHeight">HR height</label>
+					<input id="hiResHeight" type="range" min="128" max="2048" step="64" value="768" />
+					<input type="number" SDTarget="hiResHeight" SDType="int" />
+				</div>
+				<div class="row" combined>
+					<label for="hiResStrength">HR strength</label>
+					<input id="hiResStrength" type="range" min="0" max="1" step="0.05" value="0.5" />
+					<input type="number" SDTarget="hiResStrength" SDType="float" />
+				</div>
+			</div>
+			<div id="size-embed-group" collapsible class="collapsed group">
+				<h2>Size Embed</h2>
+				<div class="row">
+					<label for="customSizeEmbed">custom embed</label>
+					<input id="customSizeEmbed" type="checkbox" SDTarget="customSizeEmbed" SDType="bool" />
+				</div>
+				<div class="row" combined>
+					<label for="originalWidth">original width</label>
+					<input id="originalWidth" type="range" min="128" max="2048" step="64" value="768" />
+					<input type="number" SDTarget="originalWidth" SDType="int" />
+				</div>
+				<div class="row" combined>
+					<label for="originalHeight">original height</label>
+					<input id="originalHeight" type="range" min="128" max="2048" step="64" value="512" />
+					<input type="number" SDTarget="originalHeight" SDType="int" />
+				</div>
+				<div class="row" combined>
+					<label for="targetWidth">target width</label>
+					<input id="targetWidth" type="range" min="128" max="2048" step="64" value="768" />
+					<input type="number" SDTarget="targetWidth" SDType="int" />
+				</div>
+				<div class="row" combined>
+					<label for="targetHeight">target height</label>
+					<input id="targetHeight" type="range" min="128" max="2048" step="64" value="512" />
+					<input type="number" SDTarget="targetHeight" SDType="int" />
+				</div>
+				<div class="row" combined>
+					<label for="negativeWidth">negative width</label>
+					<input id="negativeWidth" type="range" min="128" max="2048" step="64" value="768" />
+					<input type="number" SDTarget="negativeWidth" SDType="int" />
+				</div>
+				<div class="row" combined>
+					<label for="negativeHeight">negative height</label>
+					<input id="negativeHeight" type="range" min="128" max="2048" step="64" value="512" />
+					<input type="number" SDTarget="negativeHeight" SDType="int" />
+				</div>
+			</div>
+			<div id="size-actions-group" collapsible class="collapsed group">
+				<h2>Actions</h2>
+				<div class="row">
+					<button id="swapResolution">swap Resolution</button>
+				</div>
+				<div class="row">
+					<button id="resetHiRes">reset Hi Res</button>
+				</div>
+				<div class="row">
+					<button id="resetSizeEmbed">reset Size Embed</button>
+				</div>
+			</div>
+		</div>
+		<div id="project-group" collapsible class="collapsed group">
+			<h2>Other</h2>
+			<div class="row">
+				<label for="projectList">project</label>
+				<select id="projectList">
+				</select>
+			</div>
+			<div class="row">
+				<label for="presetList">load preset</label>
+				<select id="presetList">
+				</select>
+			</div>
+			<div class="row">
+				<label for="upscalerList">upscale with</label>
+				<select id="upscalerList">
+				</select>
+			</div>
+			<div class="row">
+				<div class="column">
+					<button id="loadProject">create project</button>
+					<button id="renameProject">rename project</button>
+					<button id="reindexProject">reindex project</button>
+					<button id="importImages">import images</button>
+				</div>
+				<div class="column">
+					<button id="copyParams">copy parameters</button>
+					<button id="pasteParams">paste parameters</button>
+					<button id="assignParams">assign params</button>
+					<button id="savePreset">save preset</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="content" id="images">
+	</div>
+	<script src="/ui/main.js">
+	</script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+:root {
+	--margin-size: 10px;
+
+	/* --background: rgb(22, 22, 22);
+	--options-color: rgb(35, 35, 35);
+	--group-color: rgb(28, 28, 28);
+	--scroll-track: rgb(28, 28, 28);
+	--scroll-normal: rgba(35, 35, 35);
+	--scroll-hover: rgba(50, 50, 50); */
+
+	--background: rgb(20, 20, 20);
+	--options-color: rgb(35, 35, 35);
+	--group-color: rgb(25, 25, 25);
+	--scroll-track: rgb(25, 25, 25);
+	--scroll-normal: rgba(35, 35, 35);
+	--scroll-hover: rgba(50, 50, 50);
+
+	/* --background: rgb(15, 15, 15);
+	--options-color: rgb(25, 25, 25);
+	--group-color: rgb(35, 35, 35);
+	--scroll-track: rgb(20, 20, 20);
+	--scroll-normal: rgba(35, 35, 35);
+	--scroll-hover: rgba(50, 50, 50); */
+
+	--inset-normal: rgb(55, 55, 55);
+	--inset-hover: rgb(50, 50, 50);
+	--outset-normal: rgb(65, 65, 65);
+	--outset-hover: rgb(73, 73, 73);
+	--blue-normal: rgb(50, 80, 130);
+	--blue-hover: rgb(60, 90, 145);
+	--text-normal: rgb(190, 190, 190);
+	--text-dim: rgb(170, 170, 170);
+
+	--running-color: rgb(35, 70, 35);
+	--error-color: rgb(100, 35, 35);
+	--history-color: rgb(35, 50, 70);
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		--background: rgb(130, 130, 130);
+		--options-color: rgb(180, 180, 180);
+		--group-color: rgb(180, 180, 180);
+		--inset-normal: rgb(235, 235, 235);
+		--inset-hover: rgb(245, 245, 245);
+		--outset-normal: rgba(210, 210, 210);
+		--outset-hover: rgb(200, 200, 200);
+		--blue-normal: rgb(85, 135, 235);
+		--blue-hover: rgb(100, 150, 250);
+		--text-normal: rgb(15, 15, 15);
+		--text-dim: rgb(35, 35, 35);
+		--scroll-track: rgb(150, 150, 150);
+		--scroll-normal: rgba(200, 200, 200);
+		--scroll-hover: rgba(230, 230, 230);
+		--textarea-normal: rgba(185, 185, 185);
+		--textarea-hover: rgba(160, 160, 160);
+		--running-color: rgb(60, 100, 60);
+		--error-color: rgb(120, 60, 60);
+		--history-color: rgb(60, 80, 120);
+	}
+}
+
+.group > .group {
+	display: inline;
+	margin: 0;
+	padding: 0;
+}
+
+.collapsed > .group {
+	display: none;
+}
+
+.content {
+	display: flex;
+	flex-wrap: wrap;
+	justify-items: center;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	padding: 10px;
+}
+
+/* placeholders */
+
+.itemWrapper {
+	overflow: hidden;
+	line-height: 25px;
+	background: rgb(35, 35, 35);
+	border-radius: 5px;
+}
+
+.itemWrapper > .itemHeader {
+	margin-left: 5px;
+	margin-top: 5px;
+	margin-right: 5px;
+	border-radius: 5px;
+	background: rgba(10, 10, 10, 0.3);
+}
+
+.itemWrapper > .itemContent {
+	padding: 10px;
+}
+
+/* images */
+
+.imageWrapper {
+	position: relative;
+	overflow: hidden;
+	border-radius: 5px;
+	line-height: 0;
+}
+
+.imageWrapper > .itemHeader {
+	position: absolute;
+	left: 5px;
+	top: 5px;
+	right: 5px;
+	border-radius: 5px;
+	background: rgba(20, 20, 20, 0.7);
+	opacity: 0;
+	-webkit-backdrop-filter: blur(16px);
+	   -moz-backdrop-filter: blur(16px);
+	        backdrop-filter: blur(16px);
+}
+
+.imageWrapper.selected {
+	outline: 3px solid var(--blue-normal);
+	outline-offset: -3px;
+}
+
+.imageWrapper:hover > .itemHeader {
+	opacity: 1;
+}
+
+/* icons */
+
+.itemHeader {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 8px;
+	line-height: 25px;
+}
+
+.itemHeader > div {
+	color: rgba(250, 250, 250, 0.7);
+}
+
+.itemHeader > div:hover {
+	color: rgb(250, 250, 250);
+}
+
+.itemHeader > .iconRemove {
+	color: rgba(250, 110, 110, 0.7);
+}
+
+.itemHeader > .iconRemove:hover {
+	color: rgb(250, 110, 110);
+}
+
+.iconSpacer {
+	flex-grow: 1000;
+}
+
+.iconRemove {
+	flex-basis: 30px;
+	flex-grow: 1;
+	text-align: right;
+}
+
+.iconPrompt {
+	position: relative;
+	top: 3pt;
+	font-family: "Apple Symbols", Symbol, Arial;
+	font-size: 28pt;
+}
+
+.iconSeed,
+.iconParam {
+	position: relative;
+	top: 1pt;
+	font-family: "Apple Symbols", Symbol, Arial;
+	font-size: 26pt;
+}
+
+.iconArrow,
+.iconRemove {
+	font-family: Arial;
+	font-size: 18pt;
+}
+
+/* other */
+
+.itemContent {
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: pre;
+	color: rgba(250, 250, 250, 0.7);
+}
+
+.itemContent:hover {
+	color: rgb(250, 250, 250);
+}
+
+.running {
+	background: var(--running-color);
+}
+
+.error {
+	background: var(--error-color);
+}
+
+.history {
+	background: var(--history-color);
+}
+
+.imageWrapper > img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: none;
+}
+
+.FullScreen > img {
+	position: fixed;
+	z-index: 1;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	height: 100%;
+	object-fit: contain;
+	background: var(--background);
+}
+
+/* the Other group buttons sit a shade darker */
+
+#project-group button {
+	background: var(--button-normal);
+}
+
+#project-group button:hover {
+	background: var(--button-hover);
+}

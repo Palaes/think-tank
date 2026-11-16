@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<title>Agora – Edit Arks</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/style.css">
+	<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+	<div id="sidebar">
+		<div id="actionsWrapper">
+			<button id="createButton">create</button>
+			<button id="deleteButton">delete</button>
+			<button id="memoryButton">memory</button>
+		</div>
+		<div id="editorList"></div>
+	</div>
+	<div id="main">
+		<div id="titlePanel">
+			<button id="titleButton">Edit Arks</button>
+		</div>
+		<div id="contentWrapper">
+			<textarea id="editorInput" spellcheck="false" autocomplete="off"></textarea>
+		</div>
+		<div id="messageWrapper">
+			<div id="messagePanel">
+				<button id="saveButton">save</button>
+			</div>
+		</div>
+	</div>
+	<script src="main.js"></script>
+	<script>
+		const arkName = new URLSearchParams(location.search).get("ark");
+
+		const editor = SettingsEditor.initialize({
+			select: arkName,
+			getListData: async () => {
+				const listing = await AgoraAPI.prompts() ?? { global: [], arks: {} };
+				const entries = [];
+				for (const name of listing.global) {
+					entries.push({ label: name, id: `prompt/${name}`, data: { kind: "prompt", arkName: null, name }});
+				}
+				const arkNames = Object.keys(listing.arks).sort();
+				for (const arkName of arkNames) {
+					entries.push({ label: arkName, id: arkName, data: { kind: "ark", arkName }});
+					for (const name of listing.arks[arkName]) {
+						entries.push({ label: name, id: `prompt/${arkName}/${name}`, data: { kind: "prompt", arkName, name }});
+					}
+				}
+				return entries;
+			},
+			readItem: async (data) => {
+				if (data.kind == "ark") {
+					return await AgoraAPI.rawSettings(null, data.arkName);
+				}
+				return await AgoraAPI.readPrompt(data.arkName, data.name);
+			},
+			updateItem: async (data, value) => {
+				if (data.kind == "ark") {
+					return await AgoraAPI.settings(null, data.arkName, false, value);
+				}
+				return await AgoraAPI.writePrompt(data.arkName, data.name, value);
+			}
+		});
+
+		function selectedArk() {
+			const selection = editor.getSelection();
+			if (selection.length == 0 || selection[0].data.kind != "ark") {
+				return null;
+			}
+			return selection[0].data.arkName;
+		}
+
+		function selectedArks() {
+			const result = [];
+			for (const entry of editor.getSelection()) {
+				const name = entry.data.kind == "ark" ? entry.data.arkName : null;
+				if (name && result.indexOf(name) < 0) {
+					result.push(name);
+				}
+			}
+			return result;
+		}
+
+		document.getElementById("createButton").addEventListener("click", async () => {
+			const name = prompt("Enter new ark name:");
+			if (name) {
+				await editor.run(false, () => AgoraAPI.createArk(name));
+			}
+		});
+		document.getElementById("deleteButton").addEventListener("click", async () => {
+			const names = selectedArks();
+			if (names.length == 0) {
+				return;
+			}
+			const message = names.length == 1 ? `Delete ark ${names[0]}?` : `Delete ${names.length} arks?`;
+			if (confirm(message)) {
+				await editor.run(false, async () => {
+					for (const name of names) {
+						await AgoraAPI.removeArk(name);
+					}
+				});
+			}
+		});
+		document.getElementById("memoryButton").addEventListener("click", () => {
+			const name = selectedArk();
+			if (name) {
+				window.open(`memory.html?ark=${name}`, "_blank");
+			}
+		});
+	</script>
+</body>
+</html>

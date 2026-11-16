@@ -1,0 +1,15 @@
+- Move defaults into code
+- Move all models there
+- Direct DT GUI there too
+- Keep only one DT GUI
+- Recrate my scripts in Prisms
+  - Handle image selections
+  - Selection project actions
+  - Apply script on selection
+  - Import image with settings
+- Use config saved per project
+  - from last saved in catalogue
+  - save at last request sent
+- Cancel or discard a running generation
+- Recover ongoing entries after a server restart
+- Store the last generation parameters in local storage instead of loading them back from Draw Things

@@ -1,0 +1,8 @@
+const enum Movement {
+	PREV,
+	NEXT,
+	CATEGORYSTART,
+	CATEGORYEND,
+	START,
+	END
+}

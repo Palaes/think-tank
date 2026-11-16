@@ -1,0 +1,747 @@
+/* variables */
+
+:root {
+	--sidebar-width: 220px;
+	--menubar-width: 280px;
+	--content-width: 700px;
+	--content-inset: 1.25rem;
+	--widget-spacing: 0.65rem;
+	--widget-padding: 0.35rem;
+	--label-width: 4rem;
+
+	--main-bg: rgb(30, 30, 30);
+	--main-widget: rgb(40, 40, 40);
+	--main-hover: rgb(45, 45, 45);
+	--menu-widget: rgb(50, 50, 50);
+	--menu-hover: rgb(55, 55, 55);
+	--panel-bg: rgb(35, 35, 35);
+	--panel-widget: rgb(45, 45, 45);
+	--panel-hover: rgb(48, 48, 48);
+	--ui-text-normal: rgb(200, 200, 200);
+	--ui-text-hover: rgb(250, 250, 250);
+
+	--accent-widget: hsl(210, 60%, 33%);
+	--accent-hover: hsl(210, 60%, 35%);
+	--accent-text-normal: hsl(210, 60%, 45%);
+	--accent-text-hover: hsl(210, 60%, 55%);
+
+	--unread-text: hsl(0, 70%, 55%);
+	--unread-text-hover: hsl(0, 80%, 65%);
+	--unread-widget: hsl(0, 55%, 32%);
+	--unread-hover: hsl(0, 60%, 36%);
+
+	--label-user: var(--accent-text-normal);
+	--label-ark: var(--accent-text-normal);
+	--label-data: var(--accent-text-normal);
+	--content-user: rgb(220, 220, 220);
+	--content-ark: rgb(220, 220, 220);
+	--content-data: rgb(180, 180, 180);
+	--content-muted: rgb(150, 150, 150);
+
+	--main-border: 1px solid rgb(60, 60, 60);
+
+	--inset-shadow:
+		inset 1px 1px 1px rgba(0, 0, 0, 0.1);
+	--outset-shadow:
+		inset 1px 1px 1px rgba(255, 255, 255, 0.1),
+		inset -1px -1px 1px rgba(0, 0, 0, 0.1),
+		inset 0 -15px 10px -10px rgba(255, 255, 255, 0.05),
+		inset 0 15px 10px -10px rgba(0, 0, 0, 0.05);
+	--outset-active:
+		inset 1px 1px 1px rgba(0, 0, 0, 0.1),
+		inset 0 -15px 10px -10px rgba(255, 255, 255, 0.05),
+		inset 0 15px 10px -10px rgba(0, 0, 0, 0.05);
+	--focus-shadow:
+		inset 0px 0px 1px 2px hsla(210, 60%, 45%, 0.8);
+
+	--scroll-track: transparent;
+	--scroll-normal: rgba(50, 50, 50);
+	--scroll-hover: rgba(60, 60, 60);
+	--textarea-track: transparent;
+	--textarea-normal: rgba(35, 35, 35);
+	--textarea-hover: rgba(30, 30, 30);
+}
+
+/* layout defaults */
+
+* {
+	flex-shrink: 0;
+	flex-grow: 0;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+html,
+body {
+	height: 100%;
+}
+
+span {
+	display: contents;
+}
+
+/* main layout */
+
+body {
+	display: flex;
+	flex-direction: row;
+}
+
+#sidebar,
+#menuBar {
+	display: flex;
+	flex-direction: column;
+	padding: var(--widget-spacing);
+	gap: var(--widget-spacing);
+	overflow-y: auto;
+}
+
+#sidebar {
+	width: var(--sidebar-width);
+}
+
+#menuBar {
+	width: var(--menubar-width);
+	position: relative;
+	gap: 0;
+	padding-right: calc(var(--widget-spacing) * 1.5);
+}
+
+.chatListHidden #sidebar,
+.menuHidden #menuBar {
+	display: none;
+}
+
+#main {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+#titlePanel,
+#messageWrapper {
+	padding: var(--widget-spacing);
+}
+
+#contentWrapper {
+	flex: 1;
+	padding-left: var(--widget-spacing);
+	padding-top: var(--content-inset);
+	padding-right: var(--widget-spacing);
+	padding-bottom: var(--content-inset);
+	overflow-y: scroll;
+}
+
+#titlePanel,
+#miniButtons,
+#messagePanel {
+	display: flex;
+	flex-direction: row;
+	gap: var(--widget-spacing);
+}
+
+#chatContent,
+#miniButtons,
+#messagePanel {
+	max-width: var(--content-width);
+	margin: auto;
+}
+
+/* main typography */
+
+html,
+button,
+select,
+input,
+textarea {
+	font-family: Roboto-Palaes, Roboto Flex, -apple-system, Cambria, sans-serif;
+	font-size: 11pt;
+	line-height: 1.5;
+	letter-spacing: 0.02rem;
+}
+
+#chatContent {
+	font-size: 12pt;
+	white-space: pre-wrap;
+}
+
+/* content font, chosen in the chat header and in editor headers */
+
+body.fontCharter #chatContent,
+body.fontCharter #editorInput {
+	font-family: "Charter-Palaes", Charter, serif;
+	font-size: 12.5pt;
+	line-height: 18pt;
+	letter-spacing: 0.04rem;
+}
+
+body.fontRoboto #chatContent,
+body.fontRoboto #editorInput {
+	font-family: "Roboto-Palaes", "Roboto Flex", -apple-system, Cambria, sans-serif;
+	font-size: 12pt;
+	line-height: 18pt;
+	letter-spacing: 0.02rem;
+}
+
+body.fontConsolas #chatContent,
+body.fontConsolas #editorInput {
+	font-family: "Consolas-Palaes", Consolas, monospace;
+	font-size: 11.5pt;
+	line-height: 18pt;
+	letter-spacing: 0.01rem;
+}
+
+/* main colouring */
+
+html {
+	color: var(--ui-text-normal);
+	background: var(--main-bg);
+	border-top: var(--main-border);
+}
+
+#sidebar {
+	background: var(--panel-bg);
+	border-right: var(--main-border);
+}
+
+#menuBar {
+	background: var(--panel-bg);
+	border-left: var(--main-border);
+}
+
+#titlePanel,
+#contentWrapper {
+	border-bottom: var(--main-border);
+}
+
+#messageWrapper {
+	background: var(--panel-bg);
+	overflow-y: scroll;
+}
+
+
+/* common widgets */
+
+button,
+select,
+input,
+textarea {
+	display: inline-block;
+	appearance: none;
+	border: none;
+	padding-left: 8px;
+	padding-top: 3px;
+	padding-right: 8px;
+	padding-bottom: 3px;
+	border-radius: 5px;
+	user-select: none;
+	color: var(--ui-text-normal);
+	background: var(--main-widget);
+}
+
+button:hover,
+select:hover,
+input:hover,
+textarea:hover {
+	color: var(--ui-text-normal);
+	background: var(--main-hover);
+}
+
+button:focus,
+select:focus,
+input:focus,
+textarea:focus {
+	box-shadow: var(--focus-shadow);
+	outline: none;
+}
+
+label,
+button,
+select,
+input {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+textarea {
+	overflow-y: auto;
+	tab-size: 2;
+}
+
+textarea::-webkit-input-placeholder {
+	color: var(--ui-text-normal);
+	opacity: 0.35;
+}
+
+/* special widgets */
+
+#sidebar button,
+#menuBar button {
+	width: 100%;
+	text-align: left;
+	background: transparent;
+}
+
+#chatList button:hover {
+	color: var(--ui-text-hover);
+}
+
+#actionsWrapper button {
+	font-weight: bold;
+	color: var(--accent-text-normal);
+}
+
+#actionsWrapper button:hover {
+	color: var(--accent-text-hover);
+}
+
+#sidebar button.selected {
+	background: var(--accent-widget);
+}
+
+#chatList button.unread {
+	color: var(--unread-text);
+}
+
+#chatList button.unread:hover {
+	color: var(--unread-text-hover);
+}
+
+/* unread and selected together: the red background */
+#sidebar button.unread.selected {
+	color: var(--ui-text-normal);
+	background: var(--unread-widget);
+}
+
+#sidebar button.unread.selected:hover {
+	color: var(--ui-text-hover);
+	background: var(--unread-hover);
+}
+
+.collapseGroup {
+	display: flex;
+	flex-direction: column;
+}
+
+.groupButton {
+	display: block;
+	width: 100%;
+	text-align: left;
+	background: transparent;
+	padding-left: 8px;
+	padding-top: 3px;
+	padding-right: 8px;
+	padding-bottom: 3px;
+	border-radius: 5px;
+	user-select: none;
+}
+
+.groupButton:hover {
+	color: var(--ui-text-hover);
+}
+
+.groupButton:before {
+	display: inline-block;
+	width: 15px;
+	font-size: 0.9em;
+	vertical-align: 5%;
+	color: var(--accent-text-normal);
+	content: "\25BD";
+}
+
+.collapsed .groupButton:before {
+	content: "\25B7";
+}
+
+.groupContent {
+	display: flex;
+	flex-direction: column;
+	padding-left: 15px;
+}
+
+.collapsed .groupContent {
+	display: none;
+}
+
+/* menu rows */
+
+#menuBar .groupButton {
+	margin-top: var(--widget-spacing);
+}
+
+/* every row, the button stack included, is spaced from whatever sits above it */
+#menuBar .settingRow,
+#menuBar .buttonGroup {
+	margin-top: var(--widget-spacing);
+}
+
+#menuBar .settingRow {
+	display: flex;
+	align-items: center;
+	gap: var(--widget-spacing);
+}
+
+#menuBar .settingRow > label {
+	width: var(--label-width);
+	text-align: right;
+}
+
+#menuBar .settingRow > select,
+#menuBar .settingRow > input {
+	flex: 1;
+}
+
+#menuBar input[type="checkbox"] {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	padding: 0;
+}
+
+#menuBar .buttonGroup {
+	/* sits at the control column, nudged 2.75rem left */
+	margin-left: calc(var(--label-width) + var(--widget-spacing) - 2.75rem);
+	display: flex;
+	flex-direction: column;
+}
+
+#menuBar .buttonGroup > button {
+	text-align: left;
+	font-weight: bold;
+	color: var(--accent-text-normal);
+	background: transparent;
+}
+
+#menuBar .buttonGroup > button:hover {
+	color: var(--accent-text-hover);
+}
+
+/* standard control embossing */
+
+#menuBar select,
+#menuBar input[type="checkbox"] {
+	background: var(--menu-widget);
+	box-shadow: var(--outset-shadow);
+}
+
+#menuBar select:hover,
+#menuBar input[type="checkbox"]:hover {
+	background: var(--menu-hover);
+}
+
+#menuBar select:active,
+#menuBar input[type="checkbox"]:active {
+	box-shadow: var(--outset-active);
+}
+
+#menuBar select:focus {
+	box-shadow:
+		var(--outset-shadow),
+		var(--focus-shadow);
+}
+
+#menuBar input[type="checkbox"]:checked {
+	background: var(--accent-widget);
+}
+
+#menuBar input[type="checkbox"]:checked:hover {
+	background: var(--accent-hover);
+}
+
+#menuBar input[type="checkbox"]:checked {
+	background: var(--accent-widget);
+}
+
+#menuBar input[type="checkbox"]:checked:hover {
+	background: var(--accent-hover);
+}
+
+#chatTitle {
+	flex: 0 1 auto;
+	min-width: 0;
+	font-weight: bold;
+	text-align: left;
+	background: var(--main-widget);
+}
+
+/* selection is allowed only in the chat content */
+body.chatApp,
+body.chatApp * {
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+body.chatApp #chatContent,
+body.chatApp #chatContent *,
+body.chatApp input,
+body.chatApp textarea {
+	-webkit-user-select: text;
+	user-select: text;
+}
+
+#menuButton {
+	flex: 0 0 auto;
+	font-weight: bold;
+	text-align: right;
+	background: var(--main-widget);
+}
+
+/* the font selector leads the right-hand buttons */
+#titlePanel > #fontSelect {
+	margin-left: auto;
+}
+
+#chatTitle:hover,
+#menuButton:hover {
+	background: var(--main-hover);
+}
+
+#messageInput {
+	flex: 1;
+	padding-right: 5px;
+	font-family: Consolas-Palaes, Consolas, monospace;
+	font-size: 10pt;
+	line-height: 1.5;
+	color: var(--ui-text-normal);
+	background: var(--panel-widget);
+	resize: none;
+}
+
+#messageInput:hover {
+	background: var(--panel-hover);
+}
+
+#sendButton {
+	height: 3rem;
+	width: 3.8rem;
+	font-weight: bold;
+	background: var(--accent-widget);
+}
+
+#sendButton:hover {
+	background: var(--accent-hover);
+}
+
+#sendButton.stop {
+	background: var(--panel-widget);
+}
+
+#sendButton.stop:hover {
+	background: var(--panel-hover);
+}
+
+.messageHeader {
+	font-family: Consolas, monospace;
+	font-size: 13pt;
+	font-weight: bold;
+}
+
+.messageTitle {
+	font-weight: bold;
+}
+
+.role-user .messageHeader {
+	color: var(--label-user);
+}
+
+.role-ark .messageHeader {
+	color: var(--label-ark);
+}
+
+.role-user .messageContent {
+	color: var(--content-user);
+}
+
+.role-ark .messageContent {
+	color: var(--content-ark);
+}
+
+.messageLink {
+	color: var(--accent-text-normal);
+	text-decoration: none;
+}
+
+.messageLink:hover {
+	color: var(--accent-text-hover);
+	text-decoration: none;
+}
+
+/* gray entries */
+
+.role-env .messageHeader {
+	color: var(--label-data);
+}
+
+.role-info .messageContent,
+.role-env .messageContent,
+.type-document .messageContent,
+.type-image .messageContent {
+	font-family: Consolas, monospace;
+	font-size: 11pt;
+	color: var(--content-data);
+}
+
+.type-image {
+	display: inline-block;
+	width: 100%;
+	text-align: center;
+}
+
+.role-env .messageContent,
+.type-document .messageContent,
+.type-image .messageContent,
+.type-image img {
+	display: inline-block;
+	max-width: calc(100% - 20px);
+	max-height: calc(min(50vh, 500px));
+	margin-left: 5px;
+	margin-right: 15px;
+	border: var(--main-border);
+	border-radius: 8px;
+	box-shadow: 5px 5px 8px rgba(0, 0, 0, 0.2);
+}
+
+.role-env .messageContent,
+.type-document .messageContent,
+.type-image .messageContent {
+	padding: 12px;
+	overflow-y: auto;
+}
+
+.type-image .messageContent {
+	text-align: left;
+}
+
+/* widget embossing */
+
+#tryAgainButton,
+#editLastButton,
+#attachButton,
+#sendButton {
+	box-shadow: var(--outset-shadow);
+}
+
+#tryAgainButton:active,
+#editLastButton:active,
+#attachButton:active,
+#sendButton:active {
+	box-shadow: var(--outset-active);
+}
+
+#tryAgainButton:focus,
+#editLastButton:focus,
+#attachButton:focus,
+#sendButton:focus {
+	box-shadow:
+		var(--outset-shadow),
+		var(--focus-shadow);
+}
+
+input,
+textarea {
+	box-shadow: var(--inset-shadow);
+}
+
+/* scrollbars */
+
+::-webkit-scrollbar {
+	width: 17px;
+	height: 17px;
+}
+
+::-webkit-scrollbar-track {
+	background-color: var(--scroll-track);
+}
+
+::-webkit-scrollbar-thumb {
+	border: 5px solid transparent;
+	border-radius: 7px;
+	background-clip: content-box;
+	background-color: var(--scroll-normal);
+	min-height: 35px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: var(--scroll-hover);
+}
+
+textarea::-webkit-scrollbar-track {
+	background-color: var(--textarea-track);
+}
+
+textarea::-webkit-scrollbar-thumb {
+	background-color: var(--textarea-normal);
+	min-height: 20px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+	background-color: var(--textarea-hover);
+}
+
+/* transitions */
+
+/*
+button,
+select,
+input,
+textarea {
+	transition:
+		color 100ms,
+		background 100ms;
+}
+*/
+
+/* blocking. dimming is 0.8 throughout */
+
+/* fast, global or chat related: everything is held back, nothing is dimmed */
+body.blockAll #sidebar,
+body.blockAll #menuBar,
+body.blockAll #titlePanel,
+body.blockAll #contentWrapper,
+body.blockAll #messageWrapper {
+	pointer-events: none;
+}
+
+/* slow: the list and the title are held back and dimmed, while the settings
+   and the input panel stay live */
+body.blockLoad #sidebar,
+body.blockLoad #titlePanel,
+body.blockRun #sidebar,
+body.blockRun #titlePanel {
+	pointer-events: none;
+	opacity: 0.8;
+}
+
+/* slow context loading also holds the context back and dims it; slow
+   generation leaves the context alone */
+body.blockLoad #contentWrapper {
+	pointer-events: none;
+	opacity: 0.8;
+}
+
+/* mobile */
+
+@media (max-width: 850px) {
+	.chatListVisible #sidebar {
+		width: 50vw;
+	}
+
+	.menuVisible #menuBar {
+		min-width: 50vw;
+		max-width: 65vw;
+		position: fixed;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		width: 75vw;
+		border-top: var(--main-border);
+	}
+
+	#titlePanel,
+	#contentWrapper,
+	#messageWrapper {
+		min-width: 100vw;
+	}
+}

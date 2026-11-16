@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<title>Agora – Edit Memories</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/style.css">
+	<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+	<div id="sidebar">
+		<div id="actionsWrapper">
+			<button id="createButton">create</button>
+			<button id="deleteButton">delete</button>
+		</div>
+		<div id="editorList"></div>
+	</div>
+	<div id="main">
+		<div id="titlePanel">
+			<button id="titleButton">Edit Memories</button>
+		</div>
+		<div id="contentWrapper">
+			<textarea id="editorInput" spellcheck="false" autocomplete="off"></textarea>
+		</div>
+		<div id="messageWrapper">
+			<div id="messagePanel">
+				<button id="saveButton">save</button>
+			</div>
+		</div>
+	</div>
+	<script src="main.js"></script>
+	<script>
+		const arkName = new URLSearchParams(location.search).get("ark");
+
+		const editor = SettingsEditor.initialize({
+			getListData: async () => {
+				if (arkName == null) {
+					return [];
+				}
+				const names = await AgoraAPI.memories(arkName) ?? [];
+				const entries = [];
+				const groupSize = names.length * 2 >= 20 ? 10 : 0;
+				for (let i = 0; i < names.length; ++i) {
+					const name = names[i];
+					let group;
+					if (groupSize) {
+						const start = Math.floor(i / groupSize) * groupSize + 1;
+						const end = Math.min(start + groupSize - 1, names.length);
+						group = `Entries ${start}-${end}`;
+					}
+					entries.push({ label: `${name}-entry`, data: { kind: "entry", name }, group });
+					entries.push({ label: `${name}.txt`, data: { kind: "file", name }, group });
+				}
+				return entries;
+			},
+			readItem: async (data) => {
+				if (data.kind == "entry") {
+					return await AgoraAPI.readMemoryEntry(arkName, data.name);
+				}
+				return await AgoraAPI.readMemoryFile(arkName, data.name);
+			},
+			updateItem: async (data, value) => {
+				if (data.kind == "entry") {
+					return await AgoraAPI.writeMemoryEntry(arkName, data.name, value);
+				}
+				return await AgoraAPI.writeMemoryFile(arkName, data.name, value);
+			}
+		});
+
+		function selectedNames() {
+			const result = [];
+			for (const entry of editor.getSelection()) {
+				const name = entry.data.name;
+				if (name && result.indexOf(name) < 0) {
+					result.push(name);
+				}
+			}
+			return result;
+		}
+
+		document.getElementById("createButton").addEventListener("click", async () => {
+			if (arkName == null) {
+				return;
+			}
+			await editor.run(false, () => AgoraAPI.createMemory(arkName));
+		});
+
+		document.getElementById("deleteButton").addEventListener("click", async () => {
+			const names = selectedNames();
+			if (arkName == null || names.length == 0) {
+				return;
+			}
+			const message = names.length == 1 ? `Delete memory ${names[0]}?` : `Delete ${names.length} memories?`;
+			if (confirm(message)) {
+				await editor.run(false, async () => {
+					for (const name of names) {
+						await AgoraAPI.removeMemory(arkName, name);
+					}
+				});
+			}
+		});
+	</script>
+</body>
+</html>

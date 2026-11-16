@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<title>Agora – Edit Ideas</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/style.css">
+	<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+	<div id="sidebar">
+		<div id="actionsWrapper">
+			<button id="createButton">create</button>
+			<button id="uploadButton">upload to INBOX</button>
+			<button id="uploadSortButton">upload and sort</button>
+			<button id="summarizeButton">summarize</button>
+			<button id="renameButton">rename</button>
+			<button id="deleteButton">delete</button>
+		</div>
+		<div id="editorList"></div>
+	</div>
+	<div id="main">
+		<div id="titlePanel">
+			<button id="titleButton">Edit Ideas</button>
+		</div>
+		<div id="contentWrapper">
+			<textarea id="editorInput" spellcheck="false" autocomplete="off"></textarea>
+		</div>
+		<div id="messageWrapper">
+			<div id="messagePanel">
+				<button id="saveButton">save</button>
+			</div>
+		</div>
+	</div>
+	<script src="main.js"></script>
+	<script>
+		const editor = SettingsEditor.initialize({
+			getListData: async () => {
+				const listing = await AgoraAPI.ideas() ?? { ideas: [], inbox: [] };
+				const entries = [ { label: "workshop settings", id: "settings", data: { kind: "settings" } } ];
+				for (const name of listing.inbox ?? []) {
+					entries.push({ label: `INBOX/${name}`, id: `inbox/${name}`, data: { kind: "inbox", name }, group: "INBOX" });
+				}
+				for (const idea of listing.ideas ?? []) {
+					entries.push({ label: "description", id: `${idea.name}/description`, data: { kind: "description", name: idea.name }, group: idea.name });
+					entries.push({ label: "summary", id: `${idea.name}/summary`, data: { kind: "summary", name: idea.name }, group: idea.name });
+					entries.push({ label: "catalogue", id: `${idea.name}/catalogue`, data: { kind: "catalogue", name: idea.name }, group: idea.name });
+					for (const key of idea.entries) {
+						entries.push({ label: key, id: `${idea.name}/${key}`, data: { kind: "entry", name: idea.name, key }, group: idea.name });
+					}
+				}
+				return entries;
+			},
+			readItem: async (data) => {
+				if (data.kind == "settings") {
+					return await AgoraAPI.readIdeaSettings();
+				}
+				if (data.kind == "summary") {
+					return await AgoraAPI.readIdeaSummary(data.name);
+				}
+				if (data.kind == "description") {
+					return await AgoraAPI.readIdeaDescription(data.name);
+				}
+				if (data.kind == "catalogue") {
+					return await AgoraAPI.readIdeaCatalogue(data.name);
+				}
+				if (data.kind == "entry") {
+					return await AgoraAPI.readIdeaEntry(data.name, data.key);
+				}
+				return await AgoraAPI.readIdeaInbox(data.name);
+			},
+			updateItem: async (data, value) => {
+				if (data.kind == "settings") {
+					return await AgoraAPI.writeIdeaSettings(value);
+				}
+				if (data.kind == "summary") {
+					return await AgoraAPI.writeIdeaSummary(data.name, value);
+				}
+				if (data.kind == "description") {
+					return await AgoraAPI.writeIdeaDescription(data.name, value);
+				}
+				if (data.kind == "catalogue") {
+					return await AgoraAPI.writeIdeaCatalogue(data.name, value);
+				}
+				if (data.kind == "entry") {
+					return await AgoraAPI.writeIdeaEntry(data.name, data.key, value);
+				}
+				return await AgoraAPI.writeIdeaInbox(data.name, value);
+			}
+		});
+
+		function selectedData() {
+			const selection = editor.getSelection();
+			return selection.length ? selection[0].data : null;
+		}
+
+		const uploadInput = document.createElement("input");
+		uploadInput.type = "file";
+		let uploadSort = false;
+
+		async function uploadIdea(file, sort) {
+			if (file.type.startsWith("image/")) {
+				const reader = new FileReader();
+				const result = await new Promise(resolve => {
+					reader.addEventListener("load", () => resolve(reader.result));
+					reader.readAsDataURL(file);
+				});
+				const ext = file.type.split("/")[1] ?? "png";
+				await AgoraAPI.uploadIdeaInbox(String(result).split(",")[1], sort, ext);
+			} else {
+				const data = await file.text();
+				await AgoraAPI.uploadIdeaInbox(data, sort, null);
+			}
+		}
+
+		uploadInput.addEventListener("change", async () => {
+			const file = uploadInput.files[0];
+			if (file) {
+				uploadInput.value = "";
+				await editor.run(uploadSort, () => uploadIdea(file, uploadSort));
+			}
+		});
+
+		window.addEventListener("dragover", (event) => {
+			if (event.dataTransfer.types.includes("Files")) {
+				event.preventDefault();
+			}
+		});
+		window.addEventListener("drop", async (event) => {
+			if (event.dataTransfer.files.length == 0) {
+				return;
+			}
+			event.preventDefault();
+			await editor.run(true, async () => {
+				for (const file of event.dataTransfer.files) {
+					await uploadIdea(file, true);
+				}
+			});
+		});
+
+		document.getElementById("createButton").addEventListener("click", async () => {
+			const name = prompt("Enter new idea name:");
+			if (name == null) {
+				return;
+			}
+			const description = prompt("Enter the idea description:", "") ?? "";
+			let result;
+			await editor.run(false, async () => {
+				result = await AgoraAPI.createIdea(name, description);
+			});
+			if (result?.name == null) {
+				alert(`Unable to create idea ${name}.`);
+			}
+		});
+		document.getElementById("uploadButton").addEventListener("click", () => {
+			uploadSort = false;
+			uploadInput.click();
+		});
+		document.getElementById("uploadSortButton").addEventListener("click", () => {
+			uploadSort = true;
+			uploadInput.click();
+		});
+		document.getElementById("renameButton").addEventListener("click", async () => {
+			if (editor.getSelection().length != 1) {
+				return;
+			}
+			const data = selectedData();
+			if (data == null || data.kind == "settings" || data.kind == "inbox") {
+				return;
+			}
+			if (data.kind == "entry") {
+				const catalogue = await AgoraAPI.readIdeaCatalogue(data.name);
+				const current = catalogue?.entries?.[data.key]?.title ?? data.key;
+				const title = prompt("Enter new entry title:", current);
+				if (title) {
+					let result;
+					await editor.run(false, async () => {
+						result = await AgoraAPI.renameIdeaEntry(data.name, data.key, title);
+					});
+					if (result?.name == null) {
+						alert(`Unable to rename entry ${data.key}.`);
+					}
+				}
+				return;
+			}
+			const newName = prompt("Enter new idea name:", data.name);
+			if (newName && newName != data.name) {
+				let result;
+				await editor.run(false, async () => {
+					result = await AgoraAPI.renameIdea(data.name, newName);
+				});
+				if (result?.name == null) {
+					alert(`Unable to rename idea ${data.name}.`);
+				}
+			}
+		});
+		document.getElementById("summarizeButton").addEventListener("click", async () => {
+			const items = [];
+			const seen = [];
+			for (const entry of editor.getSelection()) {
+				const data = entry.data;
+				if (data.kind == "settings" || data.kind == "inbox") {
+					continue;
+				}
+				const id = data.kind == "entry" ? `${data.name}/${data.key}` : `${data.name}/`;
+				if (seen.indexOf(id) < 0) {
+					seen.push(id);
+					items.push(data);
+				}
+			}
+			if (items.length == 0) {
+				return;
+			}
+			await editor.stream(async onChunk => {
+				for (let i = 0; i < items.length; ++i) {
+					if (i > 0) {
+						onChunk("\n\n");
+					}
+					const data = items[i];
+					const key = data.kind == "entry" ? data.key : null;
+					await AgoraAPI.summarizeIdea(data.name, key, onChunk);
+				}
+			});
+		});
+		document.getElementById("deleteButton").addEventListener("click", async () => {
+			const inboxNames = [];
+			const ideaNames = [];
+			for (const entry of editor.getSelection()) {
+				const data = entry.data;
+				if (data.kind == "settings") {
+					continue;
+				}
+				if (data.kind == "inbox") {
+					if (inboxNames.indexOf(data.name) < 0) {
+						inboxNames.push(data.name);
+					}
+				} else if (data.name && ideaNames.indexOf(data.name) < 0) {
+					ideaNames.push(data.name);
+				}
+			}
+			const count = inboxNames.length + ideaNames.length;
+			if (count == 0) {
+				return;
+			}
+			let message;
+			if (inboxNames.length && ideaNames.length) {
+				message = `Delete ${count} selected items?`;
+			} else if (inboxNames.length) {
+				message = inboxNames.length == 1 ? `Delete inbox item ${inboxNames[0]}?` : `Delete ${inboxNames.length} inbox items?`;
+			} else {
+				message = ideaNames.length == 1 ? `Delete idea ${ideaNames[0]}?` : `Delete ${ideaNames.length} ideas?`;
+			}
+			if (confirm(message)) {
+				await editor.run(false, async () => {
+					for (const name of inboxNames) {
+						await AgoraAPI.removeIdeaInbox(name);
+					}
+					for (const name of ideaNames) {
+						await AgoraAPI.removeIdea(name);
+					}
+				});
+			}
+		});
+	</script>
+</body>
+</html>

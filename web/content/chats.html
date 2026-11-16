@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<title>Agora – Edit Chats</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/style.css">
+	<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+	<div id="sidebar">
+		<div id="actionsWrapper">
+			<button id="createButton">create</button>
+			<button id="renameButton">rename</button>
+			<button id="deleteButton">delete</button>
+			<button id="contextButton">context</button>
+		</div>
+		<div id="editorList"></div>
+	</div>
+	<div id="main">
+		<div id="titlePanel">
+			<button id="titleButton">Edit Chats</button>
+		</div>
+		<div id="contentWrapper">
+			<textarea id="editorInput" spellcheck="false" autocomplete="off"></textarea>
+		</div>
+		<div id="messageWrapper">
+			<div id="messagePanel">
+				<button id="saveButton">save</button>
+			</div>
+		</div>
+	</div>
+	<script src="main.js"></script>
+	<script>
+		const chatID = new URLSearchParams(location.search).get("chat");
+
+		// the global layer has no chat, so the chat actions sit disabled
+		function updateActions(selection) {
+			const chat = selection.length ? selection[0].data.chatID : null;
+			document.getElementById("renameButton").disabled = !chat;
+			document.getElementById("deleteButton").disabled = !chat;
+			document.getElementById("contextButton").disabled = !chat;
+		}
+
+		const editor = SettingsEditor.initialize({
+			select: chatID,
+			onSelect: updateActions,
+			getListData: async () => {
+				const chats = await AgoraAPI.chats() ?? [];
+				chats.sort((a, b) => b.created - a.created);
+				const entries = [ { label: "Global Settings", id: "global", data: { chatID: null }} ];
+				for (const chat of chats) {
+					entries.push({ label: `${chat.title} Settings`, id: chat.chatID, data: { chatID: chat.chatID }});
+				}
+				return entries;
+			},
+			readItem: async (data) => {
+				return await AgoraAPI.rawSettings(data.chatID, null);
+			},
+			updateItem: async (data, value) => {
+				return await AgoraAPI.settings(data.chatID, null, false, value);
+			}
+		});
+
+		function selectedChat() {
+			const selection = editor.getSelection();
+			return selection.length ? selection[0].data.chatID : null;
+		}
+
+		function selectedChats() {
+			const result = [];
+			for (const entry of editor.getSelection()) {
+				const chatID = entry.data.chatID;
+				if (chatID && result.indexOf(chatID) < 0) {
+					result.push(chatID);
+				}
+			}
+			return result;
+		}
+
+		document.getElementById("createButton").addEventListener("click", async () => {
+			await editor.run(false, () => AgoraAPI.create());
+		});
+		document.getElementById("renameButton").addEventListener("click", async () => {
+			if (editor.getSelection().length != 1) {
+				return;
+			}
+			const id = selectedChat();
+			if (id == null) {
+				return;
+			}
+			const settings = await AgoraAPI.rawSettings(id, null);
+			const title = prompt("Enter new chat title:", settings.title);
+			if (title) {
+				await editor.run(false, () => AgoraAPI.settings(id, null, false, { title }));
+			}
+		});
+		document.getElementById("deleteButton").addEventListener("click", async () => {
+			const ids = selectedChats();
+			if (ids.length == 0) {
+				return;
+			}
+			const message = ids.length == 1 ? `Delete chat ${ids[0]}?` : `Delete ${ids.length} chats?`;
+			if (confirm(message)) {
+				await editor.run(false, async () => {
+					for (const id of ids) {
+						await AgoraAPI.delete(id, false, () => "");
+					}
+				});
+			}
+		});
+		document.getElementById("contextButton").addEventListener("click", () => {
+			const id = selectedChat();
+			if (id) {
+				window.open(`context.html?chat=${id}`, "_blank");
+			}
+		});
+	</script>
+</body>
+</html>

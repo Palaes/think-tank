@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<title>Agora – Edit Todos</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/style.css">
+	<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+	<div id="sidebar">
+		<div id="actionsWrapper">
+			<button id="createButton">create</button>
+			<button id="renameButton">rename</button>
+			<button id="deleteButton">delete</button>
+		</div>
+		<div id="editorList"></div>
+	</div>
+	<div id="main">
+		<div id="titlePanel">
+			<button id="titleButton">Edit Todos</button>
+		</div>
+		<div id="contentWrapper">
+			<textarea id="editorInput" spellcheck="false" autocomplete="off"></textarea>
+		</div>
+		<div id="messageWrapper">
+			<div id="messagePanel">
+				<button id="saveButton">save</button>
+			</div>
+		</div>
+	</div>
+	<script src="main.js"></script>
+	<script>
+		const editor = SettingsEditor.initialize({
+			getListData: async () => {
+				const names = await AgoraAPI.todoList() ?? [];
+				const entries = [];
+				for (const name of names) {
+					entries.push({ label: name, data: { name }});
+				}
+				return entries;
+			},
+			readItem: async (data) => {
+				return await AgoraAPI.readTodo(data.name);
+			},
+			updateItem: async (data, value) => {
+				return await AgoraAPI.writeTodo(data.name, value);
+			}
+		});
+
+		function selectedName() {
+			const selection = editor.getSelection();
+			return selection.length ? selection[0].data.name : null;
+		}
+
+		function selectedNames() {
+			const result = [];
+			for (const entry of editor.getSelection()) {
+				const name = entry.data.name;
+				if (name && result.indexOf(name) < 0) {
+					result.push(name);
+				}
+			}
+			return result;
+		}
+
+		document.getElementById("createButton").addEventListener("click", async () => {
+			const input = prompt("Enter new todo name:");
+			if (input) {
+				await editor.run(false, () => AgoraAPI.createTodo(`${input}.txt`));
+			}
+		});
+		document.getElementById("renameButton").addEventListener("click", async () => {
+			if (editor.getSelection().length != 1) {
+				return;
+			}
+			const oldName = selectedName();
+			if (oldName == null) {
+				return;
+			}
+			const input = prompt("Enter new todo name:", oldName.replace(/\.txt$/, ""));
+			if (input) {
+				await editor.run(false, () => AgoraAPI.renameTodo(oldName, `${input}.txt`));
+			}
+		});
+		document.getElementById("deleteButton").addEventListener("click", async () => {
+			const names = selectedNames();
+			if (names.length == 0) {
+				return;
+			}
+			const message = names.length == 1 ? `Delete todo ${names[0]}?` : `Delete ${names.length} todos?`;
+			if (confirm(message)) {
+				await editor.run(false, async () => {
+					for (const name of names) {
+						await AgoraAPI.removeTodo(name);
+					}
+				});
+			}
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+	"name": "Prisms",
+	"short_name": "Prisms",
+	"description": "Prisms Image Generation Web UI",
+	"start_url": ".",
+	"display": "standalone",
+	"theme_color": "rgb(35, 35, 35)",
+	"background_color": "rgb(25, 25, 25)"
+}

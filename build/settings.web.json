@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "ES2020",
+		"module": "none",
+		"removeComments": true,
+		"strictNullChecks": false,
+		"outFile": "../web/content/main.js"
+	},
+	"files": [
+		"../Source/ContentWebUI/SettingsEditor.ts",
+		"../Source/AgoraWebUI/Interface.ts"
+	]
+}

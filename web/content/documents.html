@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<title>Agora – Edit Documents</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/style.css">
+	<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+	<div id="sidebar">
+		<div id="actionsWrapper">
+			<button id="createButton">create</button>
+			<button id="uploadButton">upload</button>
+			<button id="summarizeButton">summarize</button>
+			<button id="renameButton">rename</button>
+			<button id="deleteButton">delete</button>
+		</div>
+		<div id="editorList"></div>
+	</div>
+	<div id="main">
+		<div id="titlePanel">
+			<button id="titleButton">Edit Documents</button>
+		</div>
+		<div id="contentWrapper">
+			<textarea id="editorInput" spellcheck="false" autocomplete="off"></textarea>
+		</div>
+		<div id="messageWrapper">
+			<div id="messagePanel">
+				<button id="saveButton">save</button>
+			</div>
+		</div>
+	</div>
+	<script src="main.js"></script>
+	<script>
+		const editor = SettingsEditor.initialize({
+			getListData: async () => {
+				const documents = await AgoraAPI.documents() ?? [];
+				const entries = [];
+				const groupSize = documents.length * 2 >= 20 ? 10 : 0;
+				for (let i = 0; i < documents.length; ++i) {
+					const document = documents[i];
+					let group;
+					if (groupSize) {
+						const start = Math.floor(i / groupSize) * groupSize + 1;
+						const end = Math.min(start + groupSize - 1, documents.length);
+						group = `Entries ${start}-${end}`;
+					}
+					entries.push({ label: `${document.name}-entry`, data: { kind: "entry", name: document.name, ext: document.ext }, group });
+					entries.push({ label: `${document.name}.${document.ext}`, data: { kind: "file", name: document.name, ext: document.ext }, group });
+				}
+				return entries;
+			},
+			readItem: async (data) => {
+				if (data.kind == "entry") {
+					return await AgoraAPI.readDocumentEntry(data.name);
+				}
+				return await AgoraAPI.readDocumentFile(data.name, data.ext);
+			},
+			updateItem: async (data, value) => {
+				if (data.kind == "entry") {
+					return await AgoraAPI.writeDocumentEntry(data.name, value);
+				}
+				return await AgoraAPI.writeDocumentFile(data.name, data.ext, value);
+			}
+		});
+
+		const uploadInput = document.createElement("input");
+		uploadInput.type = "file";
+
+		function selectedName() {
+			const selection = editor.getSelection();
+			return selection.length ? selection[0].data.name : null;
+		}
+
+		function selectedNames() {
+			const result = [];
+			for (const entry of editor.getSelection()) {
+				const name = entry.data.name;
+				if (name && result.indexOf(name) < 0) {
+					result.push(name);
+				}
+			}
+			return result;
+		}
+
+		document.getElementById("createButton").addEventListener("click", async () => {
+			await editor.run(false, () => AgoraAPI.createDocument());
+		});
+		document.getElementById("uploadButton").addEventListener("click", () => {
+			uploadInput.click();
+		});
+		uploadInput.addEventListener("change", async () => {
+			const file = uploadInput.files[0];
+			if (file) {
+				const ext = file.name.split(".").pop() ?? "txt";
+				const data = await file.text();
+				uploadInput.value = "";
+				await editor.run(true, () => AgoraAPI.uploadDocument(ext, data));
+			}
+		});
+		document.getElementById("renameButton").addEventListener("click", async () => {
+			if (editor.getSelection().length != 1) {
+				return;
+			}
+			const oldName = selectedName();
+			if (oldName == null) {
+				return;
+			}
+			const newName = prompt("Enter new document name:", oldName);
+			if (newName && newName != oldName) {
+				await editor.run(false, () => AgoraAPI.renameDocument(oldName, newName));
+			}
+		});
+		document.getElementById("summarizeButton").addEventListener("click", async () => {
+			const names = selectedNames();
+			if (names.length == 0) {
+				return;
+			}
+			await editor.stream(async onChunk => {
+				for (let i = 0; i < names.length; ++i) {
+					if (i > 0) {
+						onChunk("\n\n");
+					}
+					await AgoraAPI.summarizeDocument(names[i], onChunk);
+				}
+			});
+		});
+		document.getElementById("deleteButton").addEventListener("click", async () => {
+			const names = selectedNames();
+			if (names.length == 0) {
+				return;
+			}
+			const message = names.length == 1 ? `Delete document ${names[0]}?` : `Delete ${names.length} documents?`;
+			if (confirm(message)) {
+				await editor.run(false, async () => {
+					for (const name of names) {
+						await AgoraAPI.removeDocument(name);
+					}
+				});
+			}
+		});
+	</script>
+</body>
+</html>

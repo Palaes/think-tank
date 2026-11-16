@@ -1,0 +1,17 @@
+{
+	"name": "TextForge",
+	"bundleID": "com.thinktank.textforge",
+	"version": "1.0.0",
+	"serverScript": "server/textforge.js",
+	"port": 8083,
+	"uiPath": "/ui/",
+	"resources": [
+		"server/textforge.js",
+		"web/textforge-ui",
+		"tool/textforge.js"
+	],
+	"cli": {
+		"name": "textforge",
+		"script": "tool/textforge.js"
+	}
+}

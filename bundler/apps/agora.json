@@ -1,0 +1,14 @@
+{
+	"name": "Agora",
+	"bundleID": "com.thinktank.agora",
+	"version": "1.0.0",
+	"serverScript": "server/agora.js",
+	"port": 8081,
+	"uiPath": "/ui/",
+	"resources": [
+		"server/agora.js",
+		"web/agora-ui",
+		"web/content"
+	],
+	"cli": null
+}

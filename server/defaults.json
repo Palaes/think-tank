@@ -1,0 +1,59 @@
+{
+	"combinedLines": 8,
+	"positiveLines": 8,
+	"negativeLines": 3,
+	"generationMode": "CLI",
+	"drawThingsTool": "draw-things-cli",
+	"models": {
+		"SD-15": {
+			"DreamShaper 8.0": "dreamshaper_8.0_f16.ckpt"
+		},
+		"SDXL": {
+			"DreamShaper XL": "dreamshaper_xl_f16.ckpt"
+		},
+		"other": {
+			"Z Image Turbo": "z_image_turbo_1.0_q8p.ckpt"
+		}
+	},
+	"LoRAs": {
+		"SD-15": {
+			"Hyper SD-15 8 LoRA": "hyper_sd_15_8_lora_f16.ckpt"
+		},
+		"SDXL": {
+			"Hyper SDXL 8 LoRA": "hyper_sdxl_8_lora_f16.ckpt"
+		}
+	},
+	"controls": {
+		"SD-15": {
+			"canny": "controlnet_canny_1.x_v1.1_f16.ckpt"
+		},
+		"SDXL": {
+			"cannyXL": "controlnet_control_lora_canny_r128_f16.ckpt"
+		}
+	},
+	"samplers": {
+		"sampler": {
+			"DDIM Normal": "DDIM",
+			"DDIM Trailing": "DDIM Trailing",
+			"PLMS Normal": "PLMS",
+			"UniPC Normal": "UniPC",
+			"UniPC Trailing": "UniPC Trailing",
+			"UniPC AYS": "UniPC AYS",
+			"DPM++ 2M Karras": "DPM++ 2M Karras",
+			"DPM++ 2M Trailing": "DPM++ 2M Trailing",
+			"DPM++ 2M AYS": "DPM++ 2M AYS",
+			"LCM Normal": "LCM",
+			"TCD Normal": "TCD",
+			"TCD Trailing": "TCD Trailing",
+			"Euler Ancestral": "Euler a",
+			"Euler A Substep": "Euler A Substep",
+			"Euler A Trailing": "Euler A Trailing",
+			"Euler A AYS": "Euler A AYS",
+			"DPM++ SDE Karras": "DPM++ SDE Karras",
+			"DPM++ SDE Substep": "DPM++ SDE Substep",
+			"DPM++ SDE Trailing": "DPM++ SDE Trailing",
+			"DPM++ SDE AYS": "DPM++ SDE AYS"
+		}
+	},
+	"presets": {}
+}

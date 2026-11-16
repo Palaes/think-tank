@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+	<title>Agora</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/style.css">
+</head>
+<body class="chatApp chatListHidden menuHidden">
+	<div id="sidebar">
+		<div id="actionsWrapper">
+			<button id="createButton">create</button>
+			<button id="renameButton">rename</button>
+			<button id="copyButton">copy</button>
+			<button id="clearButton">clear</button>
+			<button id="deleteButton">delete</button>
+		</div>
+		<div id="chatList"></div>
+	</div>
+	<div id="main">
+		<div id="titlePanel">
+			<button id="chatTitle">New Chat</button>
+			<button id="menuButton">Ark – model</button>
+		</div>
+		<div id="contentWrapper">
+			<div id="chatContent"></div>
+			<div id="miniButtons">
+				<button id="tryAgainButton">try again</button>
+				<button id="editLastButton">edit last</button>
+				<button id="attachButton">attach</button>
+			</div>
+		</div>
+		<div id="messageWrapper">
+			<div id="messagePanel">
+				<textarea id="messageInput" placeholder="message" rows="7"></textarea>
+				<button id="sendButton">send</button>
+			</div>
+		</div>
+	</div>
+	<div id="menuBar"></div>
+	<script src="/ui/main.js"></script>
+</body>
+</html>

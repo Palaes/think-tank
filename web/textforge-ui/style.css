@@ -1,0 +1,276 @@
+/* variables */
+
+:root {
+	--widget-spacing: 0.65rem;
+	--content-inset: 1.25rem;
+
+	--main-bg: rgb(30, 30, 30);
+	--main-widget: rgb(40, 40, 40);
+	--main-hover: rgb(45, 45, 45);
+	--menu-widget: rgb(50, 50, 50);
+	--menu-hover: rgb(55, 55, 55);
+	--panel-bg: rgb(35, 35, 35);
+	--panel-widget: rgb(45, 45, 45);
+	--panel-hover: rgb(48, 48, 48);
+	--ui-text-normal: rgb(200, 200, 200);
+	--ui-text-hover: rgb(250, 250, 250);
+
+	--accent-widget: hsl(210, 60%, 33%);
+	--accent-hover: hsl(210, 60%, 35%);
+	--accent-text-normal: hsl(210, 60%, 45%);
+	--accent-text-hover: hsl(210, 60%, 55%);
+
+	--content-muted: rgb(150, 150, 150);
+
+	--main-border: 1px solid rgb(60, 60, 60);
+
+	--inset-shadow:
+		inset 1px 1px 1px rgba(0, 0, 0, 0.1);
+	--outset-shadow:
+		inset 1px 1px 1px rgba(255, 255, 255, 0.1),
+		inset -1px -1px 1px rgba(0, 0, 0, 0.1),
+		inset 0 -15px 10px -10px rgba(255, 255, 255, 0.05),
+		inset 0 15px 10px -10px rgba(0, 0, 0, 0.05);
+	--outset-active:
+		inset 1px 1px 1px rgba(0, 0, 0, 0.1),
+		inset 0 -15px 10px -10px rgba(255, 255, 255, 0.05),
+		inset 0 15px 10px -10px rgba(0, 0, 0, 0.05);
+	--focus-shadow:
+		inset 0px 0px 1px 2px hsla(210, 60%, 45%, 0.8);
+
+	--scroll-track: transparent;
+	--scroll-normal: rgba(50, 50, 50);
+	--scroll-hover: rgba(60, 60, 60);
+	--textarea-track: transparent;
+	--textarea-normal: rgba(35, 35, 35);
+	--textarea-hover: rgba(30, 30, 30);
+}
+
+/* layout defaults */
+
+* {
+	flex-shrink: 0;
+	flex-grow: 0;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+html,
+body {
+	height: 100%;
+}
+
+/* main layout */
+
+body {
+	display: flex;
+	flex-direction: column;
+}
+
+#top {
+	display: flex;
+	flex-direction: column;
+	padding: 12px;
+	gap: 12px;
+}
+
+#scriptInput {
+	height: 180px;
+	font-family: Consolas-Palaes, Consolas, monospace;
+	font-size: 11pt;
+	resize: none;
+}
+
+#toolbar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+#clearButton {
+	margin-left: auto;
+}
+
+#panes {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	gap: 12px;
+	padding: 0 12px 12px;
+}
+
+#inputText,
+#outputText {
+	flex: 1;
+	min-width: 0;
+	height: 100%;
+	background: var(--main-widget);
+	resize: none;
+}
+
+#inputText:hover,
+#outputText:hover {
+	background: var(--main-hover);
+}
+
+/* typography */
+
+html,
+button,
+select,
+input,
+textarea {
+	font-family: Roboto-Palaes, Roboto Flex, -apple-system, Cambria, sans-serif;
+	font-size: 11pt;
+	line-height: 1.5;
+	letter-spacing: 0.02rem;
+}
+
+/* colouring */
+
+html {
+	color: var(--ui-text-normal);
+	background: var(--main-bg);
+}
+
+/* common widgets */
+
+button,
+select,
+input,
+textarea {
+	display: inline-block;
+	appearance: none;
+	border: none;
+	padding-left: 8px;
+	padding-top: 3px;
+	padding-right: 8px;
+	padding-bottom: 3px;
+	border-radius: 5px;
+	user-select: none;
+	color: var(--ui-text-normal);
+	background: var(--main-widget);
+}
+
+button:hover,
+select:hover,
+input:hover,
+textarea:hover {
+	color: var(--ui-text-normal);
+	background: var(--main-hover);
+}
+
+button:focus,
+select:focus,
+input:focus,
+textarea:focus {
+	box-shadow: var(--focus-shadow);
+	outline: none;
+}
+
+button:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+select,
+button {
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+textarea {
+	overflow-y: auto;
+	tab-size: 2;
+}
+
+textarea::-webkit-input-placeholder {
+	color: var(--ui-text-normal);
+	opacity: 0.35;
+}
+
+/* widget embossing */
+
+#toolbar button {
+	box-shadow: var(--outset-shadow);
+}
+
+#toolbar button:hover {
+	background: var(--menu-hover);
+}
+
+#toolbar button:active {
+	box-shadow: var(--outset-active);
+}
+
+#toolbar button:focus {
+	box-shadow:
+		var(--outset-shadow),
+		var(--focus-shadow);
+}
+
+#toolbar select {
+	background: var(--menu-widget);
+	box-shadow: var(--outset-shadow);
+}
+
+#toolbar select:hover {
+	background: var(--menu-hover);
+}
+
+input,
+textarea {
+	box-shadow: var(--inset-shadow);
+}
+
+/* blocking, matching the Agora disabler levels */
+
+body.blockAll #top,
+body.blockAll #panes,
+body.blockRun #top,
+body.blockRun #panes {
+	pointer-events: none;
+}
+
+body.blockRun #top,
+body.blockRun #panes {
+	opacity: 0.8;
+}
+
+/* scrollbars */
+
+::-webkit-scrollbar {
+	width: 17px;
+	height: 17px;
+}
+
+::-webkit-scrollbar-track {
+	background-color: var(--scroll-track);
+}
+
+::-webkit-scrollbar-thumb {
+	border: 5px solid transparent;
+	border-radius: 7px;
+	background-clip: content-box;
+	background-color: var(--scroll-normal);
+	min-height: 35px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: var(--scroll-hover);
+}
+
+textarea::-webkit-scrollbar-track {
+	background-color: var(--textarea-track);
+}
+
+textarea::-webkit-scrollbar-thumb {
+	background-color: var(--textarea-normal);
+	min-height: 20px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+	background-color: var(--textarea-hover);
+}

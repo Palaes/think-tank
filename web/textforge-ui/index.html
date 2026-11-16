@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<title>TextForge</title>
+	<link rel="stylesheet" href="/ui/style.css?v=2" />
+</head>
+<body>
+	<div id="top">
+		<textarea id="scriptInput" spellcheck="false" autocomplete="off" placeholder="commands"></textarea>
+		<div id="toolbar">
+			<select id="scriptSelect"><option value="">custom</option></select>
+			<button id="runButton">run</button>
+			<button id="applyButton">apply</button>
+			<button id="clearButton">clear</button>
+			<button id="copyButton">copy</button>
+		</div>
+	</div>
+	<div id="panes">
+		<textarea id="inputText" spellcheck="false" autocomplete="off" placeholder="original text"></textarea>
+		<textarea id="outputText" spellcheck="false" autocomplete="off" placeholder="output"></textarea>
+	</div>
+	<script src="/ui/main.js?v=2"></script>
+</body>
+</html>

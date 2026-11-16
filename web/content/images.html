@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<title>Agora – Edit Images</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/style.css">
+	<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+	<div id="sidebar">
+		<div id="actionsWrapper">
+			<button id="uploadButton">upload</button>
+			<button id="summarizeButton">summarize</button>
+			<button id="renameButton">rename</button>
+			<button id="deleteButton">delete</button>
+		</div>
+		<div id="editorList"></div>
+	</div>
+	<div id="main">
+		<div id="titlePanel">
+			<button id="titleButton">Edit Images</button>
+		</div>
+		<div id="contentWrapper">
+			<textarea id="editorInput" spellcheck="false" autocomplete="off"></textarea>
+		</div>
+		<div id="messageWrapper">
+			<div id="messagePanel">
+				<button id="saveButton">save</button>
+			</div>
+		</div>
+	</div>
+	<script src="main.js"></script>
+	<script>
+		const editor = SettingsEditor.initialize({
+			getListData: async () => {
+				const names = await AgoraAPI.imageList() ?? [];
+				const entries = [];
+				const groupSize = names.length * 2 >= 20 ? 10 : 0;
+				for (let i = 0; i < names.length; ++i) {
+					const name = names[i];
+					const entry = await AgoraAPI.readImageEntry(name);
+					const ext = entry?.ext ?? "jpeg";
+					let group;
+					if (groupSize) {
+						const start = Math.floor(i / groupSize) * groupSize + 1;
+						const end = Math.min(start + groupSize - 1, names.length);
+						group = `Entries ${start}-${end}`;
+					}
+					entries.push({ label: `${name}-entry`, data: { kind: "entry", name }, group });
+					entries.push({ label: `${name}.${ext}`, data: { kind: "image", name, ext }, group });
+				}
+				return entries;
+			},
+			readItem: async (data) => {
+				if (data.kind == "image") {
+					return new EditorImage(`/ui/images/${encodeURIComponent(data.name)}.original.${encodeURIComponent(data.ext)}`);
+				}
+				return await AgoraAPI.readImageEntry(data.name);
+			},
+			updateItem: async (data, value) => {
+				return await AgoraAPI.writeImageEntry(data.name, value);
+			}
+		});
+
+		const uploadInput = document.createElement("input");
+		uploadInput.type = "file";
+		uploadInput.accept = "image/*";
+
+		function selectedName() {
+			const selection = editor.getSelection();
+			return selection.length ? selection[0].data.name : null;
+		}
+
+		function selectedNames() {
+			const result = [];
+			for (const entry of editor.getSelection()) {
+				const name = entry.data.name;
+				if (name && result.indexOf(name) < 0) {
+					result.push(name);
+				}
+			}
+			return result;
+		}
+
+		document.getElementById("uploadButton").addEventListener("click", () => {
+			uploadInput.click();
+		});
+		uploadInput.addEventListener("change", () => {
+			const file = uploadInput.files[0];
+			if (file) {
+				const ext = file.name.split(".").pop() ?? "png";
+				const reader = new FileReader();
+				reader.addEventListener("load", async () => {
+					uploadInput.value = "";
+					await editor.run(true, () => AgoraAPI.uploadImage(ext, String(reader.result).split(",")[1]));
+				});
+				reader.readAsDataURL(file);
+			}
+		});
+		document.getElementById("renameButton").addEventListener("click", async () => {
+			if (editor.getSelection().length != 1) {
+				return;
+			}
+			const oldName = selectedName();
+			if (oldName == null) {
+				return;
+			}
+			const input = prompt("Enter new image name:", oldName);
+			if (input && input != oldName) {
+				const newName = input.replace(/\.[^.]+$/, "");
+				await editor.run(false, () => AgoraAPI.renameImage(oldName, newName));
+			}
+		});
+		document.getElementById("summarizeButton").addEventListener("click", async () => {
+			const names = selectedNames();
+			if (names.length == 0) {
+				return;
+			}
+			await editor.stream(async onChunk => {
+				for (let i = 0; i < names.length; ++i) {
+					if (i > 0) {
+						onChunk("\n\n");
+					}
+					await AgoraAPI.summarizeImage(names[i], onChunk);
+				}
+			});
+		});
+		document.getElementById("deleteButton").addEventListener("click", async () => {
+			const names = selectedNames();
+			if (names.length == 0) {
+				return;
+			}
+			const message = names.length == 1 ? `Delete image ${names[0]}?` : `Delete ${names.length} images?`;
+			if (confirm(message)) {
+				await editor.run(false, async () => {
+					for (const name of names) {
+						await AgoraAPI.removeImage(name);
+					}
+				});
+			}
+		});
+	</script>
+</body>
+</html>

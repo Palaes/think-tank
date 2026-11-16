@@ -1,0 +1,99 @@
+/* editor pages, on top of style.css */
+
+#contentWrapper {
+	padding: 0;
+	overflow: hidden;
+}
+
+#editorInput {
+	width: 100%;
+	height: 100%;
+	padding: 8px 10px;
+	border-radius: 0;
+	font-family: Consolas, monospace;
+	font-size: 10pt;
+	line-height: 1.5;
+	color: var(--ui-text-normal);
+	background: var(--main-bg);
+	box-shadow: none;
+	resize: none;
+}
+
+#editorInput:disabled {
+	opacity: 0.6;
+}
+
+#editorList button:hover {
+	color: var(--ui-text-hover);
+}
+
+#actionsWrapper button:disabled {
+	color: var(--content-muted);
+}
+
+/* long operations dim like the main UI, short ones only block */
+body.blockRun #contentWrapper,
+body.blockRun #messageWrapper {
+	pointer-events: none;
+	opacity: 0.8;
+}
+
+/* the save row holds a single save button */
+
+#messagePanel {
+	max-width: none;
+	margin: 0;
+}
+
+#messagePanel > button {
+	height: 3rem;
+	width: 150px;
+	font-weight: bold;
+	background: var(--main-widget);
+	box-shadow: var(--outset-shadow);
+}
+
+#messagePanel > button:hover {
+	background: var(--main-hover);
+}
+
+/* unsaved edits turn the save button blue */
+#messagePanel > button.dirty {
+	background: var(--accent-widget);
+}
+
+#messagePanel > button.dirty:hover {
+	background: var(--accent-hover);
+}
+
+#messagePanel > button:active {
+	box-shadow: var(--outset-active);
+}
+
+#messagePanel > button:disabled {
+	background: var(--panel-widget);
+}
+
+/* the header title toggles the list */
+
+#titleButton {
+	flex: 0 1 auto;
+	min-width: 0;
+	font-weight: bold;
+	text-align: left;
+	background: var(--main-widget);
+}
+
+#titleButton:hover {
+	background: var(--main-hover);
+}
+
+.listHidden #sidebar {
+	display: none;
+}
+
+@media (min-width: 1100px) {
+	#sidebar {
+		width: 300px;
+	}
+}

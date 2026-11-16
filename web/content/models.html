@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+	<title>Agora – Edit Models</title>
+	<link rel="manifest" href="/ui/manifest.json" />
+	<link rel="stylesheet" href="/ui/style.css">
+	<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+	<div id="sidebar">
+		<div id="actionsWrapper">
+			<button id="createButton">create</button>
+			<button id="renameButton">rename</button>
+			<button id="deleteButton">delete</button>
+		</div>
+		<div id="editorList"></div>
+	</div>
+	<div id="main">
+		<div id="titlePanel">
+			<button id="titleButton">Edit Models</button>
+		</div>
+		<div id="contentWrapper">
+			<textarea id="editorInput" spellcheck="false" autocomplete="off"></textarea>
+		</div>
+		<div id="messageWrapper">
+			<div id="messagePanel">
+				<button id="saveButton">save</button>
+			</div>
+		</div>
+	</div>
+	<script src="main.js"></script>
+	<script>
+		const modelName = new URLSearchParams(location.search).get("model");
+
+		// the default entry is the fallback, so it keeps its name
+		function updateActions(selection) {
+			const name = selection.length ? selection[0].data.name : null;
+			document.getElementById("renameButton").disabled = name == null || name == "default";
+			document.getElementById("deleteButton").disabled = name == null || name == "default";
+		}
+
+		const editor = SettingsEditor.initialize({
+			select: modelName,
+			onSelect: updateActions,
+			getListData: async () => {
+				const names = await AgoraAPI.modelList() ?? [];
+				const entries = [];
+				for (const name of names) {
+					entries.push({ label: name, data: { name }});
+				}
+				return entries;
+			},
+			readItem: async (data) => {
+				return await AgoraAPI.readModel(data.name);
+			},
+			updateItem: async (data, value) => {
+				return await AgoraAPI.writeModel(data.name, value);
+			}
+		});
+
+		document.getElementById("createButton").addEventListener("click", async () => {
+			const name = prompt("Enter new model name:");
+			if (name) {
+				await editor.run(false, () => AgoraAPI.createModel(name));
+			}
+		});
+		document.getElementById("renameButton").addEventListener("click", async () => {
+			const selection = editor.getSelection();
+			if (selection.length != 1) {
+				return;
+			}
+			const oldName = selection[0].data.name;
+			const newName = prompt("Enter new model name:", oldName);
+			if (newName) {
+				await editor.run(false, () => AgoraAPI.renameModel(oldName, newName));
+			}
+		});
+		document.getElementById("deleteButton").addEventListener("click", async () => {
+			const names = [];
+			for (const entry of editor.getSelection()) {
+				const name = entry.data.name;
+				if (name && name != "default" && names.indexOf(name) < 0) {
+					names.push(name);
+				}
+			}
+			if (names.length == 0) {
+				return;
+			}
+			const message = names.length == 1 ? `Delete model ${names[0]}?` : `Delete ${names.length} models?`;
+			if (confirm(message)) {
+				await editor.run(false, async () => {
+					for (const name of names) {
+						await AgoraAPI.removeModel(name);
+					}
+				});
+			}
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+	"compilerOptions": {
+		"target": "ES2020",
+		"module": "none",
+		"removeComments": true,
+		"strictNullChecks": false,
+		"outFile": "../web/prisms-ui/main.js"
+	},
+	"files": [
+		"../Source/PrismsWebUI/SDControl.ts"
+	]
+}
