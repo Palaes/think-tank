@@ -1899,21 +1899,19 @@ var TextUtil;
         if (value.length > sizeLimit) {
             return value
                 .substring(0, sizeLimit)
-                .split(/\s+/)
-                .filter(Boolean)
+                .split(/s+/)
                 .slice(0, -1)
                 .join(" ")
                 .concat("...");
         }
         return value
-            .split(/\s+/)
-            .filter(Boolean)
+            .split(/s+/)
             .join(" ");
     }
     TextUtil.shortifyLineNicely = shortifyLineNicely;
     function shortifyTextNicely(value, countLimit, sizeLimit) {
         const lines = value
-            .split(/\n+/)
+            .split(/\n/)
             .map(line => line.trim())
             .filter(Boolean);
         if (lines.length > countLimit) {
@@ -1932,7 +1930,8 @@ var TextUtil;
     function normalizeBlankLines(input) {
         return input
             .replace(/[ \t]+\n/g, "\n")
-            .replace(/\n\n\n+/g, "\n\n");
+            .replace(/\n\n\n+/g, "\n\n")
+            .trim();
     }
     TextUtil.normalizeBlankLines = normalizeBlankLines;
     function normalizeTypography(input) {
@@ -1953,7 +1952,8 @@ var TextUtil;
             .replace(/[“”„‟«»]/g, '"')
             .replace(/…/g, "...")
             .replace(/—/g, "–")
-            .replace(/‑/g, "-");
+            .replace(/‑/g, "-")
+            .trim();
     }
     TextUtil.normalizeAll = normalizeAll;
     function shiftIndent(value, start, end, delta) {
@@ -2038,7 +2038,7 @@ var ContextUtil;
         user: "Message from {{name}}:{{date}}{{time}}\n\n{{content}}",
         ark: "Message from {{name}}:{{date}}{{time}}\n\n{{content}}",
         env: "Result of {{name}}:{{date}}{{time}}\n\n{{content}}",
-        info: "[{{content}}]",
+        info: "[info]\n{{content}}",
         image: "[image {{name}}]\n{{content}}",
         document: "[document {{name}}]\n{{content}}"
     };
@@ -2121,12 +2121,24 @@ var ContextUtil;
                 }
             }
         }
+        let content;
+        if (template.lineCount == Infinity) {
+            if (template.lineLength == Infinity) {
+                content = TextUtil.normalizeAll(entry.content);
+            }
+            else {
+                content = TextUtil.shortifyTextNicely(entry.content, template.lineCount, template.lineLength);
+            }
+        }
+        else {
+            content = TextUtil.shortifyTextNicely(entry.content, template.lineCount, template.lineLength);
+        }
         return result
             .replace("{{date}}", date)
             .replace("{{time}}", time)
             .replace("{{epoch}}", entry.time)
             .replace("{{name}}", entry.name)
-            .replace("{{content}}", TextUtil.shortifyTextNicely(entry.content, template.lineCount, template.lineLength))
+            .replace("{{content}}", content)
             .trim();
     }
     ContextUtil.entryToText = entryToText;
@@ -2436,7 +2448,7 @@ var ParamsUtil;
     ParamsUtil.getBaseSettings = getBaseSettings;
     async function getCombinedSettings(chatID) {
         const baseSettings = await getBaseSettings(chatID);
-        return setArkSettings(baseSettings, baseSettings.process.arkName);
+        return mergeArkBelowChat(baseSettings, baseSettings.process.arkName);
     }
     ParamsUtil.getCombinedSettings = getCombinedSettings;
     async function getBaseParams(chatID, handler) {
@@ -2449,7 +2461,7 @@ var ParamsUtil;
     ParamsUtil.getBaseParams = getBaseParams;
     async function getCombinedParams(chatID, handler, arkName) {
         const baseParams = await getBaseParams(chatID, handler);
-        const result = await setArkSettings(baseParams, arkName ?? baseParams.process.arkName);
+        const result = await mergeArkBelowChat(baseParams, arkName ?? baseParams.process.arkName);
         result.process = { ...result.process, arkName: result.arkName };
         return result;
     }
@@ -2467,6 +2479,12 @@ var ParamsUtil;
             result.members = [result.process.userName, result.process.arkName];
         }
         return result;
+    }
+    async function mergeArkBelowChat(baseSettings, arkName) {
+        const settings = baseSettings;
+        const arkSettings = await ArkUtil.readArkSettings(arkName);
+        const chatSettings = await ChatUtil.readChatSettings(settings.chatID);
+        return applyMemberDefaults(SettingsUtil.mergeAll(baseSettings, arkSettings, chatSettings, { arkName }));
     }
     async function setArkSettings(baseSettings, arkName) {
         const arkSettings = await ArkUtil.readArkSettings(arkName);
@@ -2619,13 +2637,13 @@ var TopicMatcher;
         return selectMemories(reference, entries, time, 0.8, 15, 25, 0.3, 150, 250);
     }
     TopicMatcher.selectVar2 = selectVar2;
-    function selectMemoriesFor(activeContext, memories) {
+    function selectMemoriesFor(activeContext, memories, shortMax = 300, longMax = 30) {
         const parts = [];
         const first = Math.max(0, activeContext.length - referenceEntries);
         for (let i = first; i < activeContext.length; ++i) {
             parts.push(ContextUtil.entryToText(activeContext[i], ContextUtil.minimalTemplate));
         }
-        return selectVar1(parts.join("\n"), memories, Date.now());
+        return selectMemories(parts.join("\n"), memories, Date.now(), 0.9, 10, longMax, 0.5, 100, shortMax);
     }
     TopicMatcher.selectMemoriesFor = selectMemoriesFor;
     function split(block, minSize, maxSize) {
@@ -2742,10 +2760,12 @@ var MemoryUtil;
     MemoryUtil.defaultSettings = {
         model: "default",
         prompt: "Write a memory paragraph for yourself after the fields, plain text, no formatting.",
-        shortLimit: 300,
-        longLimit: 30,
-        activeLimit: 5,
-        activeEntries: 10,
+        shortLimit: 80,
+        longLimit: 8,
+        activeLimit: 2,
+        activeEntries: 8,
+        activeLines: 2,
+        activeLength: 80,
         allowRead: true,
         allowWrite: true
     };
@@ -2783,14 +2803,13 @@ var MemoryUtil;
             if (arkParams.memory.allowWrite == false) {
                 continue;
             }
-            const content = ContextUtil.contextToText(context, ContextUtil.minimalTemplate, arkParams.memory.activeEntries);
-            if (content.trim() == "") {
+            if (context.length == 0) {
                 await removeMemoryEntry(arkName, `active-${params.chatID}`);
                 continue;
             }
             const { start, end } = getTimeRange(arkParams, context);
             const entry = { source: params.chatID, short: `latest memory from chat ${params.chatID}`, start, end };
-            await addMemoryEntry(arkName, `active-${params.chatID}`, content, entry);
+            await writeCatalogueEntry(arkName, `active-${params.chatID}`, entry);
         }
     }
     MemoryUtil.onUpdate = onUpdate;
@@ -2920,9 +2939,13 @@ var MemoryUtil;
         }
         const activeNames = [];
         const activeContents = {};
-        for (const name of actives) {
-            const path = NodeUtil.getPath(arksPath, params.process.arkName, "Memories", `${name}.txt`);
-            const content = await FileUtil.readTextLocked(path) ?? "";
+        const activeTemplate = { ...ContextUtil.minimalTemplate, lineCount: params.memory.activeLines, lineLength: params.memory.activeLength };
+        const activeCount = Math.max(0, Math.floor(params.memory.activeLimit));
+        const recent = activeCount ? actives.slice(-activeCount) : [];
+        for (const name of recent) {
+            const entry = memory[name];
+            const sourceContext = await ContextUtil.loadActive(entry.source);
+            const content = ContextUtil.contextToText(sourceContext ?? [], activeTemplate, params.memory.activeEntries);
             if (content.trim() == "") {
                 if (params.memory.allowWrite) {
                     await removeMemoryEntry(params.process.arkName, name);
@@ -2933,7 +2956,7 @@ var MemoryUtil;
                 activeContents[name] = content;
             }
         }
-        const selection = TopicMatcher.selectMemoriesFor(context, entries);
+        const selection = TopicMatcher.selectMemoriesFor(context, entries, params.memory.shortLimit, params.memory.longLimit);
         const lines = [];
         if (selection.shorts.length) {
             lines.push("Other memories:\n");
@@ -2952,10 +2975,9 @@ var MemoryUtil;
             lines.push(`Memory from ${entry.source} at ${start} to ${end}:\n\n${content}\n`);
         }
         if (useActives) {
-            const recent = activeNames.slice(-params.memory.activeLimit);
-            for (const name of recent) {
+            for (const name of activeNames) {
                 const entry = memory[name];
-                const content = activeContents[name].split("\n").slice(-30).join("\n");
+                const content = activeContents[name];
                 lines.push(`Active memory from ${entry.source}:\n\n${content}\n`);
             }
         }
@@ -4305,15 +4327,11 @@ var IdeaWorkshop;
     IdeaWorkshop.settingsPath = NodeUtil.getPath(IdeaWorkshop.rootPath, "settings.json");
     IdeaWorkshop.defaultSettings = {
         enabled: true,
-        model: "default",
         assignedArk: "",
         selectPrompt: "Classify whether the provided text relates to each topic below.\nOutput exactly one line per topic, no other text:\nTopicName: true or TopicName: false\n\nTOPICS:\n\n{{topics}}\n\nEXCERPT:\n\n{{excerpt}}",
         summaryPrompt: "Summarize the following text, plain text, no formatting.\n\n{{content}}",
         contemplatePrompt: "Contemplate on the following ideas, free but grounded associations.\n\nIDEAS:\n\n{{ideas}}",
         entryPrompt: "Describe this material, plain text, no formatting.\nUse this template:\n\nTitle: [short title]\nShort: [one line summary]\n[detailed description]",
-        selectModel: "default",
-        summaryModel: "default",
-        contemplateModel: "default",
         itemsPerWake: 3,
         thinkCount: 1,
         deferred: [],
@@ -4995,7 +5013,7 @@ Copy an INBOX item:
             fields[name] = { name, description: "true or false" };
         }
         const prompt = await IdeaWorkshop.composePrompt(params, IdeaWorkshop.resolveSelectPrompt(params.idea), { topics, excerpt }, fields);
-        const model = IdeaWorkshop.resolveIdeaModel(params, params.idea.selectModel, params.generate.smallModel);
+        const model = IdeaWorkshop.resolveIdeaModel(params, params.idea.selectModel, params.generate.mainModel);
         const response = await GenerateUtil.generateRaw(params, model, [{ role: "user", content: prompt }]);
         const selected = IdeaWorkshop.parseSelection(response, names);
         return { selected, response };
@@ -5476,7 +5494,7 @@ Copy an INBOX item:
     }
     IdeaWorkshop.resolveEntryPrompt = resolveEntryPrompt;
     function resolveIdeaModel(params, name, fallback) {
-        const candidates = [name, params.idea.model, fallback, params.generate.mainModel, params.generate.smallModel];
+        const candidates = [name, fallback, params.generate.mainModel, params.generate.smallModel];
         for (const candidate of candidates) {
             if (candidate == null || candidate == "") {
                 continue;
@@ -6824,8 +6842,9 @@ var GenerateUtil;
         context = [...context];
         context = addSystemPrompt(context, await createModelPart(params, model));
         context = addSystemPrompt(context, await expandPrompt(params, prompt, fields));
-        const response = await generateRaw(params, model, context);
-        return parseFields(response, fields);
+        let result = await generateRaw(params, model, context, false);
+        result = TextUtil.normalizeAll(result);
+        return parseFields(result, fields);
     }
     GenerateUtil.generateFields = generateFields;
     async function generateMemory(params, block, fields) {
@@ -6836,19 +6855,21 @@ var GenerateUtil;
         context = addSystemPrompt(context, await createModelPart(params, model));
         context = addSystemPrompt(context, await expandPrompt(params, params.generate.prompt));
         context.push({ role: "user", content: prompt });
-        const response = await generateRaw(params, model, context);
-        return parseFields(response, fields);
+        let result = await generateRaw(params, model, context, false);
+        result = TextUtil.normalizeAll(result);
+        return parseFields(result, fields);
     }
     GenerateUtil.generateMemory = generateMemory;
     async function generateMessage(params, context) {
         const model = resolveMessageModel(params, context);
-        const converted = await convertContext(params, context, model.vision ? "latest" : "none");
+        let converted = await convertContext(params, context, model.vision ? "latest" : "none");
         const prompt = await expandPrompt(params, params.generate.prompt);
         const memories = await MemoryUtil.loadMemories(params, context, true);
-        let result = addSystemPrompt(converted, await createModelPart(params, model));
-        result = addSystemPrompt(result, prompt);
-        result = addSystemPrompt(result, memories);
-        return generateRaw(params, model, result, true);
+        converted = addSystemPrompt(converted, await createModelPart(params, model));
+        converted = addSystemPrompt(converted, prompt);
+        converted = addSystemPrompt(converted, memories);
+        let result = await generateRaw(params, model, converted, true);
+        return TextUtil.normalizeAll(result);
     }
     GenerateUtil.generateMessage = generateMessage;
     async function convertContext(params, context, imageMode) {
@@ -7521,6 +7542,14 @@ var ChatUtil;
         return [...archiveContext, ...activeContext];
     }
     ChatUtil.readContext = readContext;
+    async function readTranscript(chatID) {
+        const archiveContext = await ContextUtil.loadArchive(chatID) ?? [];
+        const activeContext = await ContextUtil.loadActive(chatID) ?? [];
+        const context = [...archiveContext, ...activeContext];
+        const template = { ...ContextUtil.archiveTemplate, gapHandler: new DateGapHandler(1800000, 300000, 300000) };
+        return TextUtil.normalizeAll(ContextUtil.contextToText(context, template, Infinity));
+    }
+    ChatUtil.readTranscript = readTranscript;
     async function editContext(chatID, index, entries) {
         const context = await ContextUtil.editActive(chatID, index, entries);
         const time = Date.now();
@@ -7696,6 +7725,10 @@ var AgoraUtil;
         return ChatUtil.readContext(chatID);
     }
     AgoraUtil.readContext = readContext;
+    async function getTranscript(chatID) {
+        return ChatUtil.readTranscript(chatID);
+    }
+    AgoraUtil.getTranscript = getTranscript;
     async function editContext(chatID, index, entries) {
         AgoraStreamer.abort(chatID);
         const lock = await Mutex.lock(chatID);
@@ -8137,6 +8170,13 @@ var AgoraServer;
         return AgoraUtil.readGlobalSettings();
     }
     AgoraServer.handleSettings = handleSettings;
+    async function handleTranscript(requestData, response) {
+        if (requestData.chatID) {
+            return AgoraUtil.getTranscript(requestData.chatID);
+        }
+        return null;
+    }
+    AgoraServer.handleTranscript = handleTranscript;
     async function handleContext(requestData, response) {
         if (requestData.chatID) {
             if (requestData.messages == null) {
@@ -8445,4 +8485,4 @@ for (let i = 0; i < process.argv.length; ++i) {
     }
 }
 AgoraUtil.initialize();
-startServer(agoraPort, { route: "/api/arks", handler: AgoraServer.handleArks }, { route: "/api/models", handler: AgoraServer.handleModels }, { route: "/api/chats", handler: AgoraServer.handleChats }, { route: "/api/create", handler: AgoraServer.handleCreate }, { route: "/api/copy", handler: AgoraServer.handleCopy }, { route: "/api/clear", handler: AgoraServer.handleClear }, { route: "/api/delete", handler: AgoraServer.handleDelete }, { route: "/api/archive", handler: AgoraServer.handleArchive }, { route: "/api/content/raw", handler: AgoraServer.handleRawSettings }, { route: "/api/content/context", handler: AgoraServer.handleContextEntry }, { route: "/api/content/prompts", handler: AgoraServer.handlePrompts }, { route: "/api/content/prompt", handler: AgoraServer.handlePrompt }, { route: "/api/content/ark", handler: AgoraServer.handleArk }, { route: "/api/content/documents", handler: AgoraServer.handleDocuments }, { route: "/api/content/document", handler: AgoraServer.handleDocument }, { route: "/api/content/memories", handler: AgoraServer.handleMemories }, { route: "/api/content/memory", handler: AgoraServer.handleMemory }, { route: "/api/content/models", handler: AgoraServer.handleModelList }, { route: "/api/content/model", handler: AgoraServer.handleModel }, { route: "/api/content/images", handler: AgoraServer.handleImages }, { route: "/api/content/image", handler: AgoraServer.handleImage }, { route: "/api/content/todos", handler: AgoraServer.handleTodos }, { route: "/api/content/todo", handler: AgoraServer.handleTodo }, { route: "/api/content/ideas", handler: AgoraServer.handleIdeas }, { route: "/api/content/idea", handler: AgoraServer.handleIdea }, { route: "/api/settings", handler: AgoraServer.handleSettings }, { route: "/api/context", handler: AgoraServer.handleContext }, { route: "/api/pop", handler: AgoraServer.handlePop }, { route: "/api/send", handler: AgoraServer.handleSend }, { route: "/api/speech", handler: AgoraServer.handleSpeech }, { route: "/api/listen", handler: AgoraServer.handleListen }, { route: "/api/silence", handler: AgoraServer.handleSilence }, { route: "/api/hand", handler: AgoraServer.handleHand }, { route: "/api/abort", handler: AgoraServer.handleAbort }, { route: "/ui/images/", dir: SettingsUtil.getLocation("/ThinkTank/Agora/Images/Images/") }, { route: "/ui/content/", dir: "./web/content/" }, { route: "/ui/", dir: "./web/agora-ui/" });
+startServer(agoraPort, { route: "/api/arks", handler: AgoraServer.handleArks }, { route: "/api/models", handler: AgoraServer.handleModels }, { route: "/api/chats", handler: AgoraServer.handleChats }, { route: "/api/create", handler: AgoraServer.handleCreate }, { route: "/api/copy", handler: AgoraServer.handleCopy }, { route: "/api/clear", handler: AgoraServer.handleClear }, { route: "/api/delete", handler: AgoraServer.handleDelete }, { route: "/api/archive", handler: AgoraServer.handleArchive }, { route: "/api/content/raw", handler: AgoraServer.handleRawSettings }, { route: "/api/content/context", handler: AgoraServer.handleContextEntry }, { route: "/api/content/prompts", handler: AgoraServer.handlePrompts }, { route: "/api/content/prompt", handler: AgoraServer.handlePrompt }, { route: "/api/content/ark", handler: AgoraServer.handleArk }, { route: "/api/content/documents", handler: AgoraServer.handleDocuments }, { route: "/api/content/document", handler: AgoraServer.handleDocument }, { route: "/api/content/memories", handler: AgoraServer.handleMemories }, { route: "/api/content/memory", handler: AgoraServer.handleMemory }, { route: "/api/content/models", handler: AgoraServer.handleModelList }, { route: "/api/content/model", handler: AgoraServer.handleModel }, { route: "/api/content/images", handler: AgoraServer.handleImages }, { route: "/api/content/image", handler: AgoraServer.handleImage }, { route: "/api/content/todos", handler: AgoraServer.handleTodos }, { route: "/api/content/todo", handler: AgoraServer.handleTodo }, { route: "/api/content/ideas", handler: AgoraServer.handleIdeas }, { route: "/api/content/idea", handler: AgoraServer.handleIdea }, { route: "/api/settings", handler: AgoraServer.handleSettings }, { route: "/api/context", handler: AgoraServer.handleContext }, { route: "/api/transcript", handler: AgoraServer.handleTranscript }, { route: "/api/pop", handler: AgoraServer.handlePop }, { route: "/api/send", handler: AgoraServer.handleSend }, { route: "/api/speech", handler: AgoraServer.handleSpeech }, { route: "/api/listen", handler: AgoraServer.handleListen }, { route: "/api/silence", handler: AgoraServer.handleSilence }, { route: "/api/hand", handler: AgoraServer.handleHand }, { route: "/api/abort", handler: AgoraServer.handleAbort }, { route: "/ui/images/", dir: SettingsUtil.getLocation("/ThinkTank/Agora/Images/Images/") }, { route: "/ui/content/", dir: "./web/content/" }, { route: "/ui/", dir: "./web/agora-ui/" });

@@ -90,6 +90,8 @@ interface SettingsMemory {
 	longLimit?: number;
 	activeLimit?: number;
 	activeEntries?: number;
+	activeLines?: number;
+	activeLength?: number;
 	allowRead?: boolean;
 	allowWrite?: boolean;
 }
@@ -126,7 +128,6 @@ interface SettingsWeb {
 
 interface SettingsIdea {
 	enabled?: boolean;
-	model?: string;
 	assignedArk?: string;
 	selectPrompt?: string;
 	summaryPrompt?: string;

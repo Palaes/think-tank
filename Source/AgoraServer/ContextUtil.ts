@@ -74,7 +74,7 @@ namespace ContextUtil {
 		user: "Message from {{name}}:{{date}}{{time}}\n\n{{content}}",
 		ark: "Message from {{name}}:{{date}}{{time}}\n\n{{content}}",
 		env: "Result of {{name}}:{{date}}{{time}}\n\n{{content}}",
-		info: "[{{content}}]",
+		info: "[info]\n{{content}}",
 		image: "[image {{name}}]\n{{content}}",
 		document: "[document {{name}}]\n{{content}}"
 	};
@@ -158,13 +158,23 @@ namespace ContextUtil {
 					time = template.time.replace("{{time}}", gap.time);
 				}
 			}
+		}// TODO: Think this through.
+		let content: string;
+		if (template.lineCount == Infinity) {
+			if (template.lineLength == Infinity) {
+				content = TextUtil.normalizeAll(entry.content);
+			} else {
+				content = TextUtil.shortifyTextNicely(entry.content, template.lineCount, template.lineLength);
+			}
+		} else {
+			content = TextUtil.shortifyTextNicely(entry.content, template.lineCount, template.lineLength);
 		}
 		return result
 			.replace("{{date}}", date)
 			.replace("{{time}}", time)
 			.replace("{{epoch}}", entry.time)
 			.replace("{{name}}", entry.name)
-			.replace("{{content}}", TextUtil.shortifyTextNicely(entry.content, template.lineCount, template.lineLength))
+			.replace("{{content}}", content)
 			.trim();
 	}
 

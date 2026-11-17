@@ -466,13 +466,13 @@ class AgoraUI {
 	}
 
 	public async onCopyContent(): Promise<void> {
-		const contents = this.contextView.getContent();
+		const contents = await AgoraAPI.transcript(this.chatMeta.chatID);
 		await navigator.clipboard.writeText(contents);
 	}
 
 	// the rendered chat, filed in the document library
 	public async onSaveDocument(): Promise<void> {
-		const contents = this.contextView.getContent();
+		const contents = await AgoraAPI.transcript(this.chatMeta.chatID);
 		const document = await AgoraAPI.createDocument();
 		if (document) {
 			await AgoraAPI.writeDocumentFile(document.name, document.ext, contents);

@@ -118,7 +118,7 @@ The sidebar keeps every conversation.
 
 The title button opens the chat list. The menu beside it opens the global, chat and Ark settings, the model choices and the editor pages.
 
-`try again` removes the last Ark reply. `edit last` brings the last user message back into the input, with its attachments when they were kept raw. `save chat` files the rendered conversation into the Documents library.
+`try again` removes the last Ark reply. `edit last` brings the last user message back into the input, with its attachments when they were kept raw. `save chat` files the full conversation transcript into the Documents library.
 
 ## Attachments
 
@@ -170,14 +170,14 @@ The `document-search` and `image-search` actions are still empty stubs.
 
 Memory belongs to the Ark, not to the chat.
 
-- Every update rewrites the current context into an active memory file. This costs no model call.
+- Every update keeps an active memory reference per chat. The content is not copied; recall reads the chat's active context and shortens it to `activeEntries` entries. This costs no model call.
 - When the context grows past `minContextSize`, the oldest block moves into `archive.json` and the Ark writes a memory from it.
 - Frozen memories live in the Ark's `Memories` folder and in its `catalogue.json`.
 - At generation time the memories are placed in the system prompt, not replayed as transcript.
 
 Use `learn` and `recall` in the chat menu to allow writing and reading. `manage memory` opens the memory editor for the current Ark.
 
-The memory prompt and the active limits are in the Ark settings:
+The memory prompt and the collection limits are in the Ark settings:
 
 ```json
 {
@@ -186,6 +186,10 @@ The memory prompt and the active limits are in the Ark settings:
 		"prompt": "Write a memory paragraph for yourself, plain text.",
 		"activeLimit": 5,
 		"activeEntries": 10,
+		"activeLines": 2,
+		"activeLength": 200,
+		"shortLimit": 300,
+		"longLimit": 30,
 		"allowRead": true,
 		"allowWrite": true
 	}
@@ -243,8 +247,8 @@ Settings are layered. A value from a higher layer overrides the same key below i
 code defaults
   < workshop settings file
   < global settings
-  < chat settings
   < Ark settings
+  < chat settings
 ```
 
 A missing file or key falls through. The JSON files are safe to edit by hand while the server runs.
@@ -287,4 +291,4 @@ The data roots are registered in `~/.config/think-tank/locations.json`. Move a r
 
 ## Export and Copy
 
-`save chat` files the visible transcript as a document in the Documents library. The menu's `copy chat` puts the same text on the clipboard. The sidebar's `copy` button makes a new chat with a copy of the history, and switches off archiving, memory writes and reads, and idea updates for the new chat. All of these are ordinary file operations, so a conversation can leave Agora and come back without a special format.
+`save chat` asks the server for the full transcript of the archive and the active context and files it as a document in the Documents library. The menu's `copy chat` puts the same text on the clipboard. The sidebar's `copy` button makes a new chat with a copy of the history, and switches off archiving, memory writes and reads, and idea updates for the new chat. All of these are ordinary file operations, so a conversation can leave Agora and come back without a special format.

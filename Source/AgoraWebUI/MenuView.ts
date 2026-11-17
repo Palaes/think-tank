@@ -75,7 +75,6 @@ class MenuView {
 		this.buildGlobalGroup();
 		this.buildChatGroup();
 		this.buildArkGroup();
-		this.buildOtherGroup();
 	}
 
 	public async loadMenu(chatID: string): Promise<void> {
@@ -95,34 +94,28 @@ class MenuView {
 	private buildGlobalGroup(): void {
 		const group = new CollapseGroup(this.container, "Global Settings");
 		this.addAction(group, "edit settings", () => this.openSettingsEditor("global"));
-		this.addAction(group, "manage chats", () => this.openSettingsEditor(this.chatID));
-		this.addAction(group, "manage Arks", () => this.openArkEditor());
 		this.addAction(group, "manage models", () => this.openModelEditor());
+		this.addAction(group, "manage images", () => this.openImageEditor());
+		this.addAction(group, "manage documents", () => this.openDocumentEditor());
+		this.addAction(group, "manage todos", () => this.openTodoEditor());
+		this.addAction(group, "manage ideas", () => this.openIdeaEditor());
 		this.buildModelRows(group, "global", this.globalModels);
 		this.buildToggleRows(group, "global", this.globalToggles, MenuView.globalToggleRows);
 	}
 
 	private buildChatGroup(): void {
 		const group = new CollapseGroup(this.container, "Chat Settings");
+		this.addAction(group, "edit settings", () => this.openSettingsEditor(this.chatID));
+		this.addAction(group, "manage context", () => this.openContextEditor());
+		this.addAction(group, "archive chat", () => this.parent.onArchive());
+		this.addAction(group, "save chat", () => this.parent.onSaveDocument());
+		this.addAction(group, "copy chat", () => this.parent.onCopyContent());
 		this.chatArk = document.createElement("select");
 		this.chatArk.addEventListener("change", this.onArkChange);
 		this.addRow(group, "Ark", this.chatArk);
 		this.buildModelRows(group, "chat", this.chatModels);
 		this.chatTemperature = this.buildTemperatureRow(group, "chat");
 		this.buildToggleRows(group, "chat", this.chatToggles);
-	}
-
-	private buildOtherGroup(): void {
-		const group = new CollapseGroup(this.container, "Other Options");
-		this.addAction(group, "manage context", () => this.openContextEditor());
-		this.addAction(group, "manage images", () => this.openImageEditor());
-		this.addAction(group, "manage documents", () => this.openDocumentEditor());
-		this.addAction(group, "manage todos", () => this.openTodoEditor());
-		this.addAction(group, "manage ideas", () => this.openIdeaEditor());
-		this.addAction(group, "edit memory", () => this.openMemoryEditor());
-		this.addAction(group, "archive chat", () => this.parent.onArchive());
-		this.addAction(group, "save chat", () => this.parent.onSaveDocument());
-		this.addAction(group, "copy chat", () => this.parent.onCopyContent());
 	}
 
 	// the context editor is its own page, opened for the chat on screen
@@ -194,6 +187,8 @@ class MenuView {
 
 	private buildArkGroup(): void {
 		const group = new CollapseGroup(this.container, "Ark Settings");
+		this.addAction(group, "edit settings", () => this.openArkEditor());
+		this.addAction(group, "manage memory", () => this.openMemoryEditor());
 		this.buildModelRows(group, "ark", this.arkModels);
 		this.arkTemperature = this.buildTemperatureRow(group, "ark");
 		this.buildToggleRows(group, "ark", this.arkToggles);

@@ -461,7 +461,6 @@ textarea::-webkit-input-placeholder {
 #chatTitle {
 	flex: 0 1 auto;
 	min-width: 0;
-	font-weight: bold;
 	text-align: left;
 	background: var(--main-widget);
 }
@@ -483,7 +482,6 @@ body.chatApp textarea {
 
 #menuButton {
 	flex: 0 0 auto;
-	font-weight: bold;
 	text-align: right;
 	background: var(--main-widget);
 }
@@ -524,10 +522,12 @@ body.chatApp textarea {
 	background: var(--accent-hover);
 }
 
+#sendButton.hand,
 #sendButton.stop {
 	background: var(--panel-widget);
 }
 
+#sendButton.hand:hover,
 #sendButton.stop:hover {
 	background: var(--panel-hover);
 }

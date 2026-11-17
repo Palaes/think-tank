@@ -32,6 +32,10 @@ class AgoraAPI {
 		return fetchData(`${this.baseURL}/api/context`, "POST", CTJSON, { chatID });
 	}
 
+	public static async transcript(chatID: string): Promise<string> {
+		return fetchText(`${this.baseURL}/api/transcript`, "POST", CTJSON, { chatID });
+	}
+
 	public static async editContext(chatID: string, index: number, messages: ContextEntry[]): Promise<ContextEntry[]> {
 		return fetchData(`${this.baseURL}/api/context`, "POST", CTJSON, { chatID, index, messages });
 	}

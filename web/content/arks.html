@@ -40,13 +40,13 @@
 				const listing = await AgoraAPI.prompts() ?? { global: [], arks: {} };
 				const entries = [];
 				for (const name of listing.global) {
-					entries.push({ label: name, id: `prompt/${name}`, data: { kind: "prompt", arkName: null, name }});
+					entries.push({ label: name, id: `prompt/${name}`, group: "Prompts", data: { kind: "prompt", arkName: null, name }});
 				}
 				const arkNames = Object.keys(listing.arks).sort();
 				for (const arkName of arkNames) {
-					entries.push({ label: arkName, id: arkName, data: { kind: "ark", arkName }});
+					entries.push({ label: "settings.json", id: arkName, group: arkName, data: { kind: "ark", arkName }});
 					for (const name of listing.arks[arkName]) {
-						entries.push({ label: name, id: `prompt/${arkName}/${name}`, data: { kind: "prompt", arkName, name }});
+						entries.push({ label: name, id: `prompt/${arkName}/${name}`, group: arkName, data: { kind: "prompt", arkName, name }});
 					}
 				}
 				return entries;

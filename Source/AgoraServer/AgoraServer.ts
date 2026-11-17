@@ -83,6 +83,13 @@ namespace AgoraServer {
 		return AgoraUtil.readGlobalSettings();
 	}
 
+	export async function handleTranscript(requestData: any, response: any): Promise<string> {
+		if (requestData.chatID) {
+			return AgoraUtil.getTranscript(requestData.chatID);
+		}
+		return null;
+	}
+
 	export async function handleContext(requestData: any, response: any): Promise<ContextEntry[]> {
 		if (requestData.chatID) {
 			if (requestData.messages == null) {
@@ -426,6 +433,7 @@ startServer(
 	{ route: "/api/content/idea", handler: AgoraServer.handleIdea },
 	{ route: "/api/settings", handler: AgoraServer.handleSettings },
 	{ route: "/api/context", handler: AgoraServer.handleContext },
+	{ route: "/api/transcript", handler: AgoraServer.handleTranscript },
 	{ route: "/api/pop", handler: AgoraServer.handlePop },
 	{ route: "/api/send", handler: AgoraServer.handleSend },
 	{ route: "/api/speech", handler: AgoraServer.handleSpeech },

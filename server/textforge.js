@@ -966,21 +966,19 @@ var TextUtil;
         if (value.length > sizeLimit) {
             return value
                 .substring(0, sizeLimit)
-                .split(/\s+/)
-                .filter(Boolean)
+                .split(/s+/)
                 .slice(0, -1)
                 .join(" ")
                 .concat("...");
         }
         return value
-            .split(/\s+/)
-            .filter(Boolean)
+            .split(/s+/)
             .join(" ");
     }
     TextUtil.shortifyLineNicely = shortifyLineNicely;
     function shortifyTextNicely(value, countLimit, sizeLimit) {
         const lines = value
-            .split(/\n+/)
+            .split(/\n/)
             .map(line => line.trim())
             .filter(Boolean);
         if (lines.length > countLimit) {
@@ -999,7 +997,8 @@ var TextUtil;
     function normalizeBlankLines(input) {
         return input
             .replace(/[ \t]+\n/g, "\n")
-            .replace(/\n\n\n+/g, "\n\n");
+            .replace(/\n\n\n+/g, "\n\n")
+            .trim();
     }
     TextUtil.normalizeBlankLines = normalizeBlankLines;
     function normalizeTypography(input) {
@@ -1020,7 +1019,8 @@ var TextUtil;
             .replace(/[“”„‟«»]/g, '"')
             .replace(/…/g, "...")
             .replace(/—/g, "–")
-            .replace(/‑/g, "-");
+            .replace(/‑/g, "-")
+            .trim();
     }
     TextUtil.normalizeAll = normalizeAll;
     function shiftIndent(value, start, end, delta) {

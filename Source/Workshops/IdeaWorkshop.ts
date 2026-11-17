@@ -21,15 +21,14 @@
 
 interface IdeaSettings {
 	enabled: boolean;
-	model: string;
 	assignedArk: string;
 	selectPrompt: string;
 	summaryPrompt: string;
 	contemplatePrompt: string;
 	entryPrompt: string;
-	selectModel: string;
-	summaryModel: string;
-	contemplateModel: string;
+	selectModel?: string;
+	summaryModel?: string;
+	contemplateModel?: string;
 	itemsPerWake: number;
 	thinkCount: number;
 	deferred: string[];
@@ -115,15 +114,11 @@ namespace IdeaWorkshop {
 
 	export const defaultSettings: IdeaSettings = {
 		enabled: true,
-		model: "default",
 		assignedArk: "",
 		selectPrompt: "Classify whether the provided text relates to each topic below.\nOutput exactly one line per topic, no other text:\nTopicName: true or TopicName: false\n\nTOPICS:\n\n{{topics}}\n\nEXCERPT:\n\n{{excerpt}}",
 		summaryPrompt: "Summarize the following text, plain text, no formatting.\n\n{{content}}",
 		contemplatePrompt: "Contemplate on the following ideas, free but grounded associations.\n\nIDEAS:\n\n{{ideas}}",
 		entryPrompt: "Describe this material, plain text, no formatting.\nUse this template:\n\nTitle: [short title]\nShort: [one line summary]\n[detailed description]",
-		selectModel: "default",
-		summaryModel: "default",
-		contemplateModel: "default",
 		itemsPerWake: 3,
 		thinkCount: 1,
 		deferred: [],
@@ -824,7 +819,7 @@ Copy an INBOX item:
 			fields[name] = { name, description: "true or false" };
 		}
 		const prompt = await IdeaWorkshop.composePrompt(params, IdeaWorkshop.resolveSelectPrompt(params.idea), { topics, excerpt }, fields);
-		const model = IdeaWorkshop.resolveIdeaModel(params, params.idea.selectModel, params.generate.smallModel);
+		const model = IdeaWorkshop.resolveIdeaModel(params, params.idea.selectModel, params.generate.mainModel);
 		const response = await GenerateUtil.generateRaw(params, model, [ { role: "user", content: prompt } ]);
 		const selected = IdeaWorkshop.parseSelection(response, names);
 		return { selected, response };
@@ -1309,7 +1304,7 @@ Copy an INBOX item:
 	}
 
 	export function resolveIdeaModel(params: CombinedParams, name: string, fallback: string): ModelSettings {
-		const candidates = [ name, params.idea.model, fallback, params.generate.mainModel, params.generate.smallModel ];
+		const candidates = [ name, fallback, params.generate.mainModel, params.generate.smallModel ];
 		for (const candidate of candidates) {
 			if (candidate == null || candidate == "") {
 				continue;

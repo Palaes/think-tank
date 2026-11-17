@@ -8,6 +8,16 @@ ThinkTank is a local suite of three tools built from one TypeScript source tree:
 
 They share one idea: Keep the data in ordinary files, keep the server free of durable in-memory state, and keep the interface plain.
 
+## WARNING
+
+ThinkTank has no security features yet. There is no authentication, no authorization, no TLS, no CSRF protection, no request size limit, no safe file-name handling and no host validation. The servers are meant for localhost only, and they do not enforce that bound by themselves.
+
+Do not expose any of these servers to a network, a public interface or an untrusted browser. The data folders are not encrypted, so treat any API keys stored in them as plain text.
+
+## Call for Help
+
+Security is the largest missing piece of the project. Contributions are welcome for authentication, localhost-only binding, request limits, safe path and file-name handling, and a content security policy. The open security notes are in [documents/TODOs/AgoraTODOs.md](documents/TODOs/AgoraTODOs.md).
+
 ## The Projects
 
 ### Agora
@@ -49,16 +59,6 @@ Use it for:
 - one script that works in the terminal and in the browser
 
 Start with [documents/user/TextForge.md](documents/user/TextForge.md).
-
-## WARNING
-
-> ThinkTank has no security features yet. There is no authentication, no authorization, no TLS, no CSRF protection, no request size limit, no safe file-name handling and no host validation. The servers are meant for localhost only, and they do not enforce that bound by themselves.
-
-> Do not expose any of these servers to a network, a public interface or an untrusted browser. The data folders are not encrypted, so treat any API keys stored in them as plain text.
-
-## Call for Help
-
-> Security is the largest missing piece of the project. Contributions are welcome for authentication, localhost-only binding, request limits, safe path and file-name handling, and a content security policy. The open security notes are in [documents/TODOs/AgoraTODOs.md](documents/TODOs/AgoraTODOs.md).
 
 ## Design Philosophy
 

@@ -2,6 +2,7 @@
 /// <reference path="../Common/FileUtil.ts" />
 /// <reference path="../Common/SettingsUtil.ts" />
 /// <reference path="../Common/DateUtil.ts" />
+/// <reference path="../Common/TextUtil.ts" />
 
 /// <reference path="../Adapters/TTSService.ts" />
 
@@ -228,6 +229,16 @@ namespace ChatUtil {
 		const time = Date.now();
 		await editChatSettings(chatID, { viewed: time });
 		return [ ...archiveContext, ...activeContext ];
+	}
+
+	// The full conversation as plain text, without touching the viewed time.
+	export async function readTranscript(chatID: string): Promise<string> {
+		const archiveContext = await ContextUtil.loadArchive(chatID) ?? [];
+		const activeContext = await ContextUtil.loadActive(chatID) ?? [];
+		const context = [ ...archiveContext, ...activeContext ];
+		// the same date gap parameters the context view uses
+		const template = { ...ContextUtil.archiveTemplate, gapHandler: new DateGapHandler(1800000, 300000, 300000) };
+		return TextUtil.normalizeAll(ContextUtil.contextToText(context, template, Infinity));
 	}
 
 	export async function editContext(chatID: string, index: number, entries: ContextEntry[]): Promise<ContextEntry[]> {

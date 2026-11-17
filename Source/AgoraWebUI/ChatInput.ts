@@ -149,12 +149,15 @@ class ChatInput {
 	private updateSend(): void {
 		if (this.archived || this.state == "idle") {
 			this.sendButton.textContent = "send";
+			this.sendButton.classList.remove("hand");
 			this.sendButton.classList.remove("stop");
 		} else if (this.state == "active") {
 			this.sendButton.textContent = "hand";
+			this.sendButton.classList.add("hand");
 			this.sendButton.classList.remove("stop");
 		} else {
 			this.sendButton.textContent = "stop";
+			this.sendButton.classList.remove("hand");
 			this.sendButton.classList.add("stop");
 		}
 	}

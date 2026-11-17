@@ -45,7 +45,7 @@ namespace ParamsUtil {
 
 	export async function getCombinedSettings(chatID: string): Promise<CombinedSettings> {
 		const baseSettings = await getBaseSettings(chatID);
-		return setArkSettings(baseSettings, baseSettings.process.arkName);
+		return mergeArkBelowChat(baseSettings, baseSettings.process.arkName);
 	}
 
 	export async function getBaseParams(chatID: string, handler: AgoraStreamer): Promise<CombinedParams> {
@@ -58,7 +58,7 @@ namespace ParamsUtil {
 
 	export async function getCombinedParams(chatID: string, handler: AgoraStreamer, arkName?: string): Promise<CombinedParams> {
 		const baseParams = await getBaseParams(chatID, handler);
-		const result = await setArkSettings(baseParams, arkName ?? baseParams.process.arkName);
+		const result = await mergeArkBelowChat(baseParams, arkName ?? baseParams.process.arkName);
 		result.process = { ...result.process, arkName: result.arkName };
 		return result;
 	}
@@ -78,6 +78,14 @@ namespace ParamsUtil {
 			result.members = [ result.process.userName, result.process.arkName ];
 		}
 		return result;
+	}
+
+	// The ark layer sits below the chat layer, so a chat can override what its ark sets.
+	async function mergeArkBelowChat<Type>(baseSettings: Type, arkName: string): Promise<Type> {
+		const settings: any = baseSettings;
+		const arkSettings = await ArkUtil.readArkSettings(arkName);
+		const chatSettings = await ChatUtil.readChatSettings(settings.chatID);
+		return applyMemberDefaults(SettingsUtil.mergeAll(baseSettings, arkSettings, chatSettings, { arkName }));
 	}
 
 	export async function setArkSettings<Type>(baseSettings: Type, arkName: string): Promise<Type> {

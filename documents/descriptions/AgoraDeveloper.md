@@ -106,7 +106,7 @@ The schedule side is cooperative. Each wakeup handler answers with the next time
 
 ## Settings Resolution
 
-Settings come from five places. The built-in defaults in the code are the floor; a workshop's own settings file sits above them; then the global `settings.json`, the chat's `settings.json` and the Ark's `settings.json` follow, each overriding only the fields it holds. Every reader merges the file over the defaults, so a partially written settings file is valid and a missing one simply falls through.
+Settings come from five places. The built-in defaults in the code are the floor; a workshop's own settings file sits above them; then the global `settings.json`, the Ark's `settings.json` and the chat's `settings.json` follow, each overriding only the fields it holds, so a chat can override its Ark. Every reader merges the file over the defaults, so a partially written settings file is valid and a missing one simply falls through.
 
 The intended shape of the merged result, kept close to the code:
 
@@ -114,10 +114,10 @@ The intended shape of the merged result, kept close to the code:
 settings = {
 	...defaultSettings
 	...globalSettings
-	...chatSettings
 	...arkSettings
-	memorySettings: { ...defaultMemorySettings, ...globalMemorySettings, ...chatMemorySettings, ...arkMemorySettings }
-	workshopSettings: { ...defaultWorkshopSettings, ...globalWorkshopSettings, ...chatWorkshopSettings, ...arkWorkshopSettings }
+	...chatSettings
+	memorySettings: { ...defaultMemorySettings, ...globalMemorySettings, ...arkMemorySettings, ...chatMemorySettings }
+	workshopSettings: { ...defaultWorkshopSettings, ...globalWorkshopSettings, ...arkWorkshopSettings, ...chatWorkshopSettings }
 }
 
 metaSettings = metaModels[metaModel]
@@ -250,7 +250,7 @@ A reference reaches the transcript as its name, and the description behind it is
 
 Memory belongs to the Ark, not to the chat, and it has three layers of life.
 
-The active layer is a projection, not a conclusion. Every update rewrites the whole active context into `active-<chatID>.txt` through the minimal template, which costs no model call. It is a plain-text record of what has been said, so a chat can be abandoned mid-thread and the Ark still has the turn on file.
+The active layer is a projection, not a conclusion. Every update keeps an `active-<chatID>` catalogue entry as a reference to the chat, without copying the context. On recall only the newest `activeLimit` references are read; each source chat's active context passes through the minimal template with `activeEntries` entries, `activeLines` lines and `activeLength` characters. This costs no model call.
 
 The frozen layer is condensation. When the active context crosses `contextLimit`, the oldest entries move into the chat's `archive.json` and the block is handed to the main model with the memory prompt. The answer has a short line, a tags line, a weight and the note body. The short line, the covered time range, the source chat and the weight are filed in the Ark's `memory.json`, and the body is written beside it in `Memories`. The tags line is parsed but currently dropped.
 

@@ -178,14 +178,14 @@ namespace TopicMatcher {
 	}
 
 	// Selects the memories to load for the given context, matched against its
-	// last few entries.
-	export function selectMemoriesFor(activeContext: ContextEntry[], memories: MemoryEntry[]): MemorySelection {
+	// last few entries. The maximum counts come from the memory settings.
+	export function selectMemoriesFor(activeContext: ContextEntry[], memories: MemoryEntry[], shortMax: number = 300, longMax: number = 30): MemorySelection {
 		const parts = [];
 		const first = Math.max(0, activeContext.length - referenceEntries);
 		for (let i = first; i < activeContext.length; ++i) {
 			parts.push(ContextUtil.entryToText(activeContext[i], ContextUtil.minimalTemplate));
 		}
-		return selectVar1(parts.join("\n"), memories, Date.now());
+		return selectMemories(parts.join("\n"), memories, Date.now(), 0.9, 10, longMax, 0.5, 100, shortMax);
 	}
 
 	// The boundary with the strongest topic change whose preceding user and ark

@@ -194,6 +194,9 @@ class AgoraAPI {
     static async readContext(chatID) {
         return fetchData(`${this.baseURL}/api/context`, "POST", CTJSON, { chatID });
     }
+    static async transcript(chatID) {
+        return fetchText(`${this.baseURL}/api/transcript`, "POST", CTJSON, { chatID });
+    }
     static async editContext(chatID, index, messages) {
         return fetchData(`${this.baseURL}/api/context`, "POST", CTJSON, { chatID, index, messages });
     }
@@ -734,7 +737,6 @@ class MenuView {
         this.buildGlobalGroup();
         this.buildChatGroup();
         this.buildArkGroup();
-        this.buildOtherGroup();
     }
     async loadMenu(chatID) {
         this.chatID = chatID;
@@ -751,32 +753,27 @@ class MenuView {
     buildGlobalGroup() {
         const group = new CollapseGroup(this.container, "Global Settings");
         this.addAction(group, "edit settings", () => this.openSettingsEditor("global"));
-        this.addAction(group, "manage chats", () => this.openSettingsEditor(this.chatID));
-        this.addAction(group, "manage Arks", () => this.openArkEditor());
         this.addAction(group, "manage models", () => this.openModelEditor());
+        this.addAction(group, "manage images", () => this.openImageEditor());
+        this.addAction(group, "manage documents", () => this.openDocumentEditor());
+        this.addAction(group, "manage todos", () => this.openTodoEditor());
+        this.addAction(group, "manage ideas", () => this.openIdeaEditor());
         this.buildModelRows(group, "global", this.globalModels);
         this.buildToggleRows(group, "global", this.globalToggles, MenuView.globalToggleRows);
     }
     buildChatGroup() {
         const group = new CollapseGroup(this.container, "Chat Settings");
+        this.addAction(group, "edit settings", () => this.openSettingsEditor(this.chatID));
+        this.addAction(group, "manage context", () => this.openContextEditor());
+        this.addAction(group, "archive chat", () => this.parent.onArchive());
+        this.addAction(group, "save chat", () => this.parent.onSaveDocument());
+        this.addAction(group, "copy chat", () => this.parent.onCopyContent());
         this.chatArk = document.createElement("select");
         this.chatArk.addEventListener("change", this.onArkChange);
         this.addRow(group, "Ark", this.chatArk);
         this.buildModelRows(group, "chat", this.chatModels);
         this.chatTemperature = this.buildTemperatureRow(group, "chat");
         this.buildToggleRows(group, "chat", this.chatToggles);
-    }
-    buildOtherGroup() {
-        const group = new CollapseGroup(this.container, "Other Options");
-        this.addAction(group, "manage context", () => this.openContextEditor());
-        this.addAction(group, "manage images", () => this.openImageEditor());
-        this.addAction(group, "manage documents", () => this.openDocumentEditor());
-        this.addAction(group, "manage todos", () => this.openTodoEditor());
-        this.addAction(group, "manage ideas", () => this.openIdeaEditor());
-        this.addAction(group, "edit memory", () => this.openMemoryEditor());
-        this.addAction(group, "archive chat", () => this.parent.onArchive());
-        this.addAction(group, "save chat", () => this.parent.onSaveDocument());
-        this.addAction(group, "copy chat", () => this.parent.onCopyContent());
     }
     openContextEditor() {
         window.open(`/ui/content/context.html?chat=${this.chatID}`, "_blank");
@@ -830,6 +827,8 @@ class MenuView {
     }
     buildArkGroup() {
         const group = new CollapseGroup(this.container, "Ark Settings");
+        this.addAction(group, "edit settings", () => this.openArkEditor());
+        this.addAction(group, "manage memory", () => this.openMemoryEditor());
         this.buildModelRows(group, "ark", this.arkModels);
         this.arkTemperature = this.buildTemperatureRow(group, "ark");
         this.buildToggleRows(group, "ark", this.arkToggles);
@@ -1217,21 +1216,19 @@ var TextUtil;
         if (value.length > sizeLimit) {
             return value
                 .substring(0, sizeLimit)
-                .split(/\s+/)
-                .filter(Boolean)
+                .split(/s+/)
                 .slice(0, -1)
                 .join(" ")
                 .concat("...");
         }
         return value
-            .split(/\s+/)
-            .filter(Boolean)
+            .split(/s+/)
             .join(" ");
     }
     TextUtil.shortifyLineNicely = shortifyLineNicely;
     function shortifyTextNicely(value, countLimit, sizeLimit) {
         const lines = value
-            .split(/\n+/)
+            .split(/\n/)
             .map(line => line.trim())
             .filter(Boolean);
         if (lines.length > countLimit) {
@@ -1250,7 +1247,8 @@ var TextUtil;
     function normalizeBlankLines(input) {
         return input
             .replace(/[ \t]+\n/g, "\n")
-            .replace(/\n\n\n+/g, "\n\n");
+            .replace(/\n\n\n+/g, "\n\n")
+            .trim();
     }
     TextUtil.normalizeBlankLines = normalizeBlankLines;
     function normalizeTypography(input) {
@@ -1271,7 +1269,8 @@ var TextUtil;
             .replace(/[“”„‟«»]/g, '"')
             .replace(/…/g, "...")
             .replace(/—/g, "–")
-            .replace(/‑/g, "-");
+            .replace(/‑/g, "-")
+            .trim();
     }
     TextUtil.normalizeAll = normalizeAll;
     function shiftIndent(value, start, end, delta) {
@@ -2427,14 +2426,17 @@ class ChatInput {
     updateSend() {
         if (this.archived || this.state == "idle") {
             this.sendButton.textContent = "send";
+            this.sendButton.classList.remove("hand");
             this.sendButton.classList.remove("stop");
         }
         else if (this.state == "active") {
             this.sendButton.textContent = "hand";
+            this.sendButton.classList.add("hand");
             this.sendButton.classList.remove("stop");
         }
         else {
             this.sendButton.textContent = "stop";
+            this.sendButton.classList.remove("hand");
             this.sendButton.classList.add("stop");
         }
     }
@@ -3031,11 +3033,11 @@ class AgoraUI {
         });
     }
     async onCopyContent() {
-        const contents = this.contextView.getContent();
+        const contents = await AgoraAPI.transcript(this.chatMeta.chatID);
         await navigator.clipboard.writeText(contents);
     }
     async onSaveDocument() {
-        const contents = this.contextView.getContent();
+        const contents = await AgoraAPI.transcript(this.chatMeta.chatID);
         const document = await AgoraAPI.createDocument();
         if (document) {
             await AgoraAPI.writeDocumentFile(document.name, document.ext, contents);

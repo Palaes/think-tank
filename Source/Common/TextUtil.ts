@@ -113,21 +113,19 @@ namespace TextUtil {
 		if (value.length > sizeLimit) {
 			return value
 				.substring(0, sizeLimit)
-				.split(/\s+/)
-				.filter(Boolean)
+				.split(/s+/)
 				.slice(0, -1)
 				.join(" ")
 				.concat("...");
 		}
 		return value
-			.split(/\s+/)
-			.filter(Boolean)
+			.split(/s+/)
 			.join(" ");
 	}
 
 	export function shortifyTextNicely(value: string, countLimit: number, sizeLimit: number): string {
 		const lines = value
-			.split(/\n+/)
+			.split(/\n/)
 			.map(line => line.trim())
 			.filter(Boolean);
 		if (lines.length > countLimit) {
@@ -146,7 +144,8 @@ namespace TextUtil {
 	export function normalizeBlankLines(input: string): string {
 		return input
 			.replace(/[ \t]+\n/g, "\n")
-			.replace(/\n\n\n+/g, "\n\n");
+			.replace(/\n\n\n+/g, "\n\n")
+			.trim();
 	}
 
 	export function normalizeTypography(input: string): string {
@@ -167,7 +166,8 @@ namespace TextUtil {
 			.replace(/[“”„‟«»]/g, '"')
 			.replace(/…/g, "...")
 			.replace(/—/g, "–")
-			.replace(/‑/g, "-");
+			.replace(/‑/g, "-")
+			.trim();
 	}
 
 	// One level is a tab and two spaces count as one level. Every line the range

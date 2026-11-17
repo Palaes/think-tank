@@ -21,6 +21,8 @@ interface MemorySettings {
 	longLimit: number;
 	activeLimit: number;
 	activeEntries: number;
+	activeLines: number;
+	activeLength: number;
 	allowRead: boolean;
 	allowWrite: boolean;
 }
@@ -40,10 +42,12 @@ namespace MemoryUtil {
 	export const defaultSettings: MemorySettings = {
 		model: "default",
 		prompt: "Write a memory paragraph for yourself after the fields, plain text, no formatting.",
-		shortLimit: 300,
-		longLimit: 30,
-		activeLimit: 5,
-		activeEntries: 10,
+		shortLimit: 80,
+		longLimit: 8,
+		activeLimit: 2,
+		activeEntries: 8,
+		activeLines: 2,
+		activeLength: 80,
 		allowRead: true,
 		allowWrite: true
 	};
@@ -85,14 +89,14 @@ namespace MemoryUtil {
 			if (arkParams.memory.allowWrite == false) {
 				continue;
 			}
-			const content = ContextUtil.contextToText(context, ContextUtil.minimalTemplate, arkParams.memory.activeEntries);
-			if (content.trim() == "") {
+			// an active memory only references its chat, the content is read and shortened on recall
+			if (context.length == 0) {
 				await removeMemoryEntry(arkName, `active-${params.chatID}`);
 				continue;
 			}
 			const { start, end } = getTimeRange(arkParams, context);
 			const entry = { source: params.chatID, short: `latest memory from chat ${params.chatID}`, start, end };
-			await addMemoryEntry(arkName, `active-${params.chatID}`, content, entry);
+			await writeCatalogueEntry(arkName, `active-${params.chatID}`, entry);
 		}
 	}
 
@@ -218,11 +222,15 @@ namespace MemoryUtil {
 		}
 		const activeNames = [];
 		const activeContents: Dict<string> = {};
-		for (const name of actives) {
-			const path = NodeUtil.getPath(arksPath, params.process.arkName, "Memories", `${name}.txt`);
-			const content = await FileUtil.readTextLocked(path) ?? "";
+		const activeTemplate = { ...ContextUtil.minimalTemplate, lineCount: params.memory.activeLines, lineLength: params.memory.activeLength };
+		const activeCount = Math.max(0, Math.floor(params.memory.activeLimit));
+		const recent = activeCount ? actives.slice(-activeCount) : [];
+		for (const name of recent) {
+			const entry = memory[name];
+			const sourceContext = await ContextUtil.loadActive(entry.source);
+			const content = ContextUtil.contextToText(sourceContext ?? [], activeTemplate, params.memory.activeEntries);
 			if (content.trim() == "") {
-				// an empty active memory is a leftover, so drop it
+				// an empty active reference is a leftover, so drop it
 				if (params.memory.allowWrite) {
 					await removeMemoryEntry(params.process.arkName, name);
 				}
@@ -231,7 +239,7 @@ namespace MemoryUtil {
 				activeContents[name] = content;
 			}
 		}
-		const selection = TopicMatcher.selectMemoriesFor(context, entries);
+		const selection = TopicMatcher.selectMemoriesFor(context, entries, params.memory.shortLimit, params.memory.longLimit);
 		const lines = [];
 		if (selection.shorts.length) {
 			lines.push("Other memories:\n");
@@ -250,10 +258,9 @@ namespace MemoryUtil {
 			lines.push(`Memory from ${entry.source} at ${start} to ${end}:\n\n${content}\n`);
 		}
 		if (useActives) {
-			const recent = activeNames.slice(-params.memory.activeLimit);
-			for (const name of recent) {
+			for (const name of activeNames) {
 				const entry = memory[name];
-				const content = activeContents[name].split("\n").slice(-30).join("\n");
+				const content = activeContents[name];
 				lines.push(`Active memory from ${entry.source}:\n\n${content}\n`);
 			}
 		}

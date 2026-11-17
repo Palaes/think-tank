@@ -1,10 +1,13 @@
+# Current – Valid
+
 - Redistribute real-esrgan-ncc-vulkan?
-- prompts and alerts do not work in the swift app
 - Utilize decision models and fast local deciders
-- Add memory loading config to settings
-- Reduce cost of the whole system
 - Provide examples in documentations
-- Better organize documentations
+- Add screenshots to documentations
+- Create a true documentation page
+- Update this TODO
+
+# Random - Check
 
 - Description of the main message flow (setting based - does it include time, etc)
 - Check all defaults writing or perhaps include a starting data folder in the repo
@@ -38,7 +41,7 @@ ProcessUtil.delete(params, remember):
 
 ProcessUtil.edit(chatID, index, entries):
 
-# Agora TODOs
+# Agora – Check
 
 Empty message handling:
 - Solution 1:

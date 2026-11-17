@@ -124,6 +124,10 @@ namespace AgoraUtil {
 		return ChatUtil.readContext(chatID);
 	}
 
+	export async function getTranscript(chatID: string): Promise<string> {
+		return ChatUtil.readTranscript(chatID);
+	}
+
 	export async function editContext(chatID: string, index: number, entries: ContextEntry[]): Promise<ContextEntry[]> {
 		AgoraStreamer.abort(chatID);
 		const lock = await Mutex.lock(chatID);

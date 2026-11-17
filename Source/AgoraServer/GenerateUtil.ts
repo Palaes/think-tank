@@ -127,8 +127,9 @@ namespace GenerateUtil {
 		context = [ ...context ];
 		context = addSystemPrompt(context, await createModelPart(params, model));
 		context = addSystemPrompt(context, await expandPrompt(params, prompt, fields));
-		const response = await generateRaw(params, model, context);
-		return parseFields(response, fields);
+		let result = await generateRaw(params, model, context, false);
+		result = TextUtil.normalizeAll(result);
+		return parseFields(result, fields);
 	}
 
 	export async function generateMemory(params: CombinedParams, block: ContextEntry[], fields: Dict<DescriptionField>): Promise<Dict<string>> {
@@ -139,19 +140,21 @@ namespace GenerateUtil {
 		context = addSystemPrompt(context, await createModelPart(params, model));
 		context = addSystemPrompt(context, await expandPrompt(params, params.generate.prompt));
 		context.push({ role: "user", content: prompt });
-		const response = await generateRaw(params, model, context);
-		return parseFields(response, fields);
+		let result = await generateRaw(params, model, context, false);
+		result = TextUtil.normalizeAll(result);
+		return parseFields(result, fields);
 	}
 
 	export async function generateMessage(params: CombinedParams, context: ContextEntry[]): Promise<string> {
 		const model = resolveMessageModel(params, context);
-		const converted = await convertContext(params, context, model.vision ? "latest" : "none");
+		let converted = await convertContext(params, context, model.vision ? "latest" : "none");
 		const prompt = await expandPrompt(params, params.generate.prompt);
 		const memories = await MemoryUtil.loadMemories(params, context, true);
-		let result = addSystemPrompt(converted, await createModelPart(params, model));
-		result = addSystemPrompt(result, prompt);
-		result = addSystemPrompt(result, memories);
-		return generateRaw(params, model, result, true);
+		converted = addSystemPrompt(converted, await createModelPart(params, model));
+		converted = addSystemPrompt(converted, prompt);
+		converted = addSystemPrompt(converted, memories);
+		let result = await generateRaw(params, model, converted, true);
+		return TextUtil.normalizeAll(result);
 	}
 
 	export async function convertContext(params: CombinedParams, context: ContextEntry[], imageMode: ImageMode): Promise<ChatMessage[]> {
